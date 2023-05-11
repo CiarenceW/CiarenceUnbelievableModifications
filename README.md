@@ -16,6 +16,11 @@ Allow you to drop your gun in any scene, anytime.
 
 ### GunTweaks
 For now, only fixes the main spring on the Desert Eagle, which clips through the grip.
+Let me know if there's anything else that could need fixed.
 
 ### VictorianFix
 For now, only fixes the floor collider on the top floor of the Victorian tile, which would block you from collecting a tape from under the turret that could spawn there.
+Probably possible to add new spawns, however, doing that by code might be very time consuming.
+
+### Config!!!!!!!!!!
+You can turn on/off any of these patches anytime you want by going to BepInEx/config/CiarenceUnbelievableModifications.cfg, or by installing one of the many BepInEx [Config](https://github.com/sinai-dev/BepInExConfigManager) [Managers](https://github.com/BepInEx/BepInEx.ConfigurationManager), which allows you to do it on the fly!
