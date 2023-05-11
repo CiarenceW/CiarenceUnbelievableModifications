@@ -9,7 +9,7 @@ Turrets' ammo boxes now **explode** if you shoot them! (and if they have any amm
 ### FlashlightTweaks  
 Allows you to drop and turn off/on your flashlight on a whim!  
 Hold **"E"** with the flashlight in your hands when you're not holding a gun to drop it!   
-Press **"X"** by default to toggle the flashlight.
+Press **"X"** by default to toggle the flashlight.  
 Also fixes a bug where the smoke cone's opacity wouldn't lower, even when the flashlight was out of battery.
 
 ### DropGunEverywhere
