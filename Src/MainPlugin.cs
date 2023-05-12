@@ -1,4 +1,4 @@
-﻿using BepInEx;
+using BepInEx;
 using Receiver2;
 using UnityEngine.Events;
 using UnityEngine;
@@ -20,6 +20,7 @@ namespace CiarenceUnbelievableModifications
         private ConfigEntry<bool> configDropGunEverywhere;
         private ConfigEntry<bool> configTurretAmmoBoxBoom;
         private ConfigEntry<bool> configGunTweaks;
+        private ConfigEntry<bool> configRobotTweaks;
         private ConfigEntry<bool> configVictorianFix;
         private void Awake()
         {
@@ -56,7 +57,12 @@ namespace CiarenceUnbelievableModifications
                 "GunTweaks",
                 true,
                 "Enable the gun fixes/changes/stuff, requires restart");
-
+                
+            configRobotTweaks = Config.Bind("General",
+                "RobotTweaks",
+                true,
+                "Enable the fixes for the killdrones, requires restart");
+                
             configVictorianFix = Config.Bind("General",
                 "VictorianFix",
                 true,
@@ -87,6 +93,7 @@ namespace CiarenceUnbelievableModifications
             else DropGunEverywhere.Disable();
 
             if (configGunTweaks.Value) Harmony.CreateAndPatchAll(typeof(GunTweaks));
+            if (configRobotTweaks.Value) Harmony.CreateAndPatchAll(typeof(RobotTweaks));
             if (configVictorianFix.Value) Harmony.CreateAndPatchAll(typeof(VictorianFix));
 
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(OnInitialize));
