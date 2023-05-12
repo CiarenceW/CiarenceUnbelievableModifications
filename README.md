@@ -25,3 +25,6 @@ Probably possible to add new spawns, however, doing that by code might be very t
 
 ### Config!!!!!!!!!!
 You can turn on/off any of these patches anytime you want by going to BepInEx/config/CiarenceUnbelievableModifications.cfg, or by installing one of the many BepInEx [Config](https://github.com/sinai-dev/BepInExConfigManager) [Managers](https://github.com/BepInEx/BepInEx.ConfigurationManager), which allows you to do it on the fly!
+
+## Installation
+After having installed [BepInEx 5.4.21](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.21), which you hopefully should've already done by now, extract the .zip file in Receiver2/BepInEx/plugins
