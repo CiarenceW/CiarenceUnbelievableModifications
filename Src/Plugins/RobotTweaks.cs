@@ -17,8 +17,8 @@ namespace CiarenceUnbelievableModifications
         [HarmonyPostfix]
         private static void PatchCoreAwake(ref ReceiverCoreScript __instance)
         {
-		var bomb_bot = __instance.enemy_prefabs.bomb_bot.GetComponent<BombBotScript>();
-		bomb_bot.voice_filter = "event:/TextToSpeech/TextToSpeech - bomb bot";
+            var bomb_bot = __instance.enemy_prefabs.bomb_bot.GetComponent<BombBotScript>();
+            bomb_bot.voice_filter = "event:/TextToSpeech/TextToSpeech - bomb bot"; //this doesn't currently do anything, I think it used to talk and stuff and it was cool but it doesn't anymore. It just beeps. Capitalism.
         }
     }
 }
