@@ -76,29 +76,6 @@ namespace CiarenceUnbelievableModifications
             }
 
             return codeMatcher.InstructionEnumeration();
-            /*var code = new List<CodeInstruction>(instructions);
-            int insertionIndex = -1;
-            Label idkwhatimdoing = generator.DefineLabel();
-            for (int i = 0; i < code.Count - 1; i++) // -1 since we will be checking i + 1
-            {
-                if (code[i].opcode == OpCodes.Ldarg_0 && code[i + 1].opcode == OpCodes.Ldfld && code[i + 2].opcode == OpCodes.Call && code[i + 3].opcode == OpCodes.Callvirt)
-                {
-                    insertionIndex = i + 4;
-                    code[i + 2].labels.Add(idkwhatimdoing);
-                    break;
-                }
-            }
-
-            var instructionsToInsert = new List<CodeInstruction>();
-
-            instructionsToInsert.Add(new CodeInstruction(OpCodes.Ldloc_2));
-            instructionsToInsert.Add(new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Light), "set_color", new Type[] { typeof(Color) })));
-
-            if (insertionIndex != -1)
-            {
-                code.InsertRange(insertionIndex, instructionsToInsert);
-            }
-            return code;*/
         }
 
         public static void Discolights()
