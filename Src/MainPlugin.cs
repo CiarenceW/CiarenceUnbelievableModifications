@@ -134,19 +134,16 @@ namespace CiarenceUnbelievableModifications
             configTurretColourNormal.SettingChanged += (object sender, EventArgs args) =>
             {
                 RobotTweaks.colour_normal = configTurretColourNormal.Value;
-                Debug.Log(RobotTweaks.colour_normal);
             };
 
             configTurretColourAlert.SettingChanged += (object sender, EventArgs args) =>
             {
                 RobotTweaks.colour_alert = configTurretColourAlert.Value;
-                Debug.Log(RobotTweaks.colour_alert);
             };
 
             configTurretColourAlertShooting.SettingChanged += (object sender, EventArgs args) =>
             {
                 RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
-                Debug.Log(RobotTweaks.colour_alert_shooting);
             };
 
             RobotTweaks.colour_normal = configTurretColourNormal.Value;
