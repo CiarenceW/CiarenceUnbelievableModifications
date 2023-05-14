@@ -17,8 +17,8 @@ namespace CiarenceUnbelievableModifications
         [HarmonyPostfix]
         private static void PatchCoreAwake(ref ReceiverCoreScript __instance)
         {
-		var bomb_bot = __instance.enemy_prefabs.bomb_bot.GetComponent<BombBotScript>();
-		bomb_bot.voice_filter = "event:/TextToSpeech/TextToSpeech - bomb bot";
+            var bomb_bot = __instance.enemy_prefabs.bomb_bot.GetComponent<BombBotScript>();
+            bomb_bot.voice_filter = "event:/TextToSpeech/TextToSpeech - bomb bot";
         }
     }
 }
