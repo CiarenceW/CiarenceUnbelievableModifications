@@ -18,6 +18,11 @@ namespace CiarenceUnbelievableModifications
         private ConfigEntry<bool> configFlashlightTweaks;
         private ConfigEntry<KeyCode> configFlashlightToggleKey;
         private ConfigEntry<bool> configDropGunEverywhere;
+        private ConfigEntry<bool> configEnableTurretDiscoLights;
+        private ConfigEntry<Color> configTurretColourNormal;
+        private ConfigEntry<Color> configTurretColourAlert;
+        private ConfigEntry<Color> configTurretColourAlertShooting;
+        private ConfigEntry<int> configDiscoTimescale;
         private ConfigEntry<bool> configTurretAmmoBoxBoom;
         private ConfigEntry<bool> configGunTweaks;
         private ConfigEntry<bool> configRobotTweaks;
@@ -57,12 +62,37 @@ namespace CiarenceUnbelievableModifications
                 "GunTweaks",
                 true,
                 "Enable the gun fixes/changes/stuff, requires restart");
-                
+
             configRobotTweaks = Config.Bind("General",
                 "RobotTweaks",
                 true,
                 "Enable the fixes for the killdrones, requires restart");
-                
+
+            configEnableTurretDiscoLights = Config.Bind("Fun stuff",
+                "TurretDiscoLights",
+                false,
+                "Makes turret lights disco");
+
+            configDiscoTimescale = Config.Bind("Fun stuff",
+                "TurretDiscoLightsTimescale",
+                5,
+                new ConfigDescription("Colour for the turret's camera while alert and shooting", new AcceptableValueRange<int>(0, 30)));
+
+            configTurretColourNormal = Config.Bind("Turret colour",
+                "TurretColourNormal",
+                Color.blue,
+                "Colour for the turret's camera");
+
+            configTurretColourAlert = Config.Bind("Turret colour",
+                "TurretColourAlert",
+                Color.yellow,
+                "Colour for the turret's camera while alert");
+
+            configTurretColourAlertShooting = Config.Bind("Turret colour",
+                "TurretColourAlertShooting",
+                Color.red,
+                "Colour for the turret's camera while alert and shooting");
+
             configVictorianFix = Config.Bind("General",
                 "VictorianFix",
                 true,
@@ -86,6 +116,44 @@ namespace CiarenceUnbelievableModifications
                 else TurretAmmoBoxBoom.Disable();
             };
 
+            configEnableTurretDiscoLights.SettingChanged += (object sender, EventArgs args) =>
+            {
+                if (!configEnableTurretDiscoLights.Value)
+                {
+                    RobotTweaks.colour_normal = configTurretColourNormal.Value;
+                    RobotTweaks.colour_alert = configTurretColourAlert.Value;
+                    RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
+                }
+            };
+
+            configDiscoTimescale.SettingChanged += (object sender, EventArgs args) =>
+            {
+                RobotTweaks.disco_timescale = configDiscoTimescale.Value;
+            };
+
+            configTurretColourNormal.SettingChanged += (object sender, EventArgs args) =>
+            {
+                RobotTweaks.colour_normal = configTurretColourNormal.Value;
+                Debug.Log(RobotTweaks.colour_normal);
+            };
+
+            configTurretColourAlert.SettingChanged += (object sender, EventArgs args) =>
+            {
+                RobotTweaks.colour_alert = configTurretColourAlert.Value;
+                Debug.Log(RobotTweaks.colour_alert);
+            };
+
+            configTurretColourAlertShooting.SettingChanged += (object sender, EventArgs args) =>
+            {
+                RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
+                Debug.Log(RobotTweaks.colour_alert_shooting);
+            };
+
+            RobotTweaks.colour_normal = configTurretColourNormal.Value;
+            RobotTweaks.colour_alert = configTurretColourAlert.Value;
+            RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
+            RobotTweaks.disco_timescale = configDiscoTimescale.Value;
+
             if (configTurretAmmoBoxBoom.Value) TurretAmmoBoxBoom.Enable();
             else TurretAmmoBoxBoom.Disable();
 
@@ -106,6 +174,7 @@ namespace CiarenceUnbelievableModifications
 
         private void Update()
         {
+            if (configEnableTurretDiscoLights.Value) RobotTweaks.Discolights();
             if (configFlashlightTweaks.Value) FlashlightTweaks.UpdateFlashlight(configFlashlightToggleKey.Value);
         }
     }
