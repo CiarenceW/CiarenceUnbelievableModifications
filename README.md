@@ -15,6 +15,10 @@ Also fixes a bug where the smoke cone's opacity wouldn't lower, even when the fl
 ### DropGunEverywhere
 Allow you to drop your gun in any scene, anytime.
 
+### RobotTweaks
+Fixes the Bomb Bot so that it doesn't soft-lock the game when it spots the player.  
+You can now choose the colours of the lights on the killdrones! Also includes a disco option, inspired by [this](https://www.youtube.com/watch?v=welzVVJD4ok) video, by IwanPlays
+
 ### GunTweaks
 For now, only fixes the main spring on the Desert Eagle, which clips through the grip.
 Let me know if there's anything else that could need fixed.
@@ -28,3 +32,7 @@ You can turn on/off any of these patches anytime you want by going to BepInEx/co
 
 ## Installation
 After having installed [BepInEx 5.4.21](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.21), which you hopefully should've already done by now, extract the .zip file in Receiver2/BepInEx/plugins
+
+## Credits timeeeeeeeeeee
+- Szikaka for all the cool advice and stuff and all the code he did that's also pretty cool  
+- IwanPlays for the idea of the customizable killdrone lights, and also the cool videos on Receiver :)
