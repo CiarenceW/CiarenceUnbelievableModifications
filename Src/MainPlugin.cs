@@ -16,6 +16,8 @@ namespace CiarenceUnbelievableModifications
         //all this kinda sucks, like, I probably should've tried to uniform everything and stuff. But I started doing all that at 3am and can't currently be arsed to make it all better. So oops.
         private ConfigEntry<bool> configVerboseDebugEnabled;
         private ConfigEntry<bool> configFlashlightTweaks;
+        private ConfigEntry<bool> configDiscoFlashlight;
+        private ConfigEntry<Color> configFlashlightColour;
         private ConfigEntry<KeyCode> configFlashlightToggleKey;
         private ConfigEntry<bool> configDropGunEverywhere;
         private ConfigEntry<bool> configEnableTurretDiscoLights;
@@ -49,6 +51,18 @@ namespace CiarenceUnbelievableModifications
                 "FlashlightTweaks",
                 true,
                 "Enable the flashlight tweaks");
+
+            //Flashlight disco config
+            configDiscoFlashlight = Config.Bind("Fun stuff",
+                "DiscoFlashlight",
+                false,
+                "Enable the disco mode for the flashlight");
+
+            //Flashlight custom colour config
+            configFlashlightColour = Config.Bind("Flashlight colour",
+                "FlashlightColour",
+                Color.white,
+                "The colour of the flashlight");
 
             //Flashlight toggle key config
             configFlashlightToggleKey = Config.Bind("Keybinds",
@@ -90,7 +104,7 @@ namespace CiarenceUnbelievableModifications
             configDiscoTimescale = Config.Bind("Fun stuff",
                 "TurretDiscoLightsTimescale",
                 5,
-                new ConfigDescription("Colour for the turret's camera while alert and shooting", new AcceptableValueRange<int>(0, 30)));
+                new ConfigDescription("Speed at which the colours change for the disco modes", new AcceptableValueRange<int>(0, 30)));
 
             //Turret colour config
             configTurretColourNormal = Config.Bind("Turret colour",
@@ -180,6 +194,19 @@ namespace CiarenceUnbelievableModifications
             configDiscoTimescale.SettingChanged += (object sender, EventArgs args) =>
             {
                 RobotTweaks.disco_timescale = configDiscoTimescale.Value;
+                FlashlightTweaks.disco_timescale = configDiscoTimescale.Value;
+            };
+
+            configFlashlightColour.SettingChanged += (object sender, EventArgs args) =>
+            {
+                FlashlightTweaks.flashlight_color = configFlashlightColour.Value;
+                FlashlightTweaks.UpdateFlashlightColours();
+            };
+
+            configDiscoFlashlight.SettingChanged += (object sender, EventArgs args) =>
+            {
+                if (!configDiscoFlashlight.Value) FlashlightTweaks.flashlight_color = configFlashlightColour.Value;
+                FlashlightTweaks.UpdateFlashlightColours();
             };
 
 
@@ -224,6 +251,9 @@ namespace CiarenceUnbelievableModifications
                 RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
             };
 
+            FlashlightTweaks.flashlight_color = configFlashlightColour.Value;
+            FlashlightTweaks.UpdateFlashlightColours();
+
             RobotTweaks.colour_idle_drone = configDroneColourIdle.Value;
             RobotTweaks.colour_alert_drone = configDroneColourAlert.Value;
             RobotTweaks.colour_attacking_drone = configDroneColourAttacking.Value;
@@ -236,6 +266,7 @@ namespace CiarenceUnbelievableModifications
             RobotTweaks.colour_alert = configTurretColourAlert.Value;
             RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
             RobotTweaks.disco_timescale = configDiscoTimescale.Value;
+            FlashlightTweaks.disco_timescale = configDiscoTimescale.Value;
 
             if (configTurretAmmoBoxBoom.Value) TurretAmmoBoxBoom.Enable();
             else TurretAmmoBoxBoom.Disable();
@@ -259,6 +290,7 @@ namespace CiarenceUnbelievableModifications
 
         private void Update()
         {
+            if (configDiscoFlashlight.Value) FlashlightTweaks.Discolights();
             if (configEnableTurretDiscoLights.Value) RobotTweaks.Discolights();
             if (configFlashlightTweaks.Value) FlashlightTweaks.UpdateFlashlight(configFlashlightToggleKey.Value);
         }
