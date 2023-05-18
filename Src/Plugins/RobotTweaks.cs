@@ -105,7 +105,6 @@ namespace CiarenceUnbelievableModifications
             {
                 var state = (ShockDroneState)typeof(ShockDrone).GetField("state", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(shockDroneScript);
 
-                if (verbose) Debug.LogFormat("State is {0}", state);
                 switch (state)
                 {
                     case ShockDroneState.Idle:
@@ -136,7 +135,6 @@ namespace CiarenceUnbelievableModifications
             {
                 var state = (SecurityCameraState)typeof(SecurityCamera).GetField("state", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(securityCameraScript);
 
-                if (verbose) Debug.LogFormat("State is {0}", state);
                 switch (state)
                 {
                     case SecurityCameraState.Idle:

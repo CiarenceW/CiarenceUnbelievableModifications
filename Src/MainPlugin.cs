@@ -15,6 +15,19 @@ namespace CiarenceUnbelievableModifications
     {
         //all this kinda sucks, like, I probably should've tried to uniform everything and stuff. But I started doing all that at 3am and can't currently be arsed to make it all better. So oops.
         private ConfigEntry<bool> configVerboseDebugEnabled;
+        private ConfigEntry<bool> configFogColourChangerEnabled;
+        private ConfigEntry<Color> configFogColourBeginnerEast;
+        private ConfigEntry<Color> configFogColourBeginnerWest;
+        private ConfigEntry<Color> configFogColourSleeperEast;
+        private ConfigEntry<Color> configFogColourSleeperWest;
+        private ConfigEntry<Color> configFogColourSleepwalkerEast;
+        private ConfigEntry<Color> configFogColourSleepwalkerWest;
+        private ConfigEntry<Color> configFogColourFireEast;
+        private ConfigEntry<Color> configFogColourFireWest;
+        private ConfigEntry<Color> configFogColourAwakeEast;
+        private ConfigEntry<Color> configFogColourAwakeWest;
+        private ConfigEntry<Color> configFogColourOtherEast;
+        private ConfigEntry<Color> configFogColourOtherWest;
         private ConfigEntry<bool> configFlashlightTweaks;
         private ConfigEntry<bool> configDiscoFlashlight;
         private ConfigEntry<Color> configFlashlightColour;
@@ -51,6 +64,73 @@ namespace CiarenceUnbelievableModifications
                 "FlashlightTweaks",
                 true,
                 "Enable the flashlight tweaks");
+
+            //Fog tweaks config
+            configFogColourChangerEnabled = Config.Bind("General",
+                "FogColourChanger",
+                true,
+                "Enable the fog colour tweaks");
+
+            //Fog Colour tweaks config
+            configFogColourBeginnerEast = Config.Bind("Fog",
+                "FogColourBeginnerEast",
+                PostProcessTweaks.east_beginner_colour,
+                "The color of the fog on the east side for beginner and intro");
+
+            configFogColourBeginnerWest = Config.Bind("Fog",
+                "FogColourBeginnerWest",
+                PostProcessTweaks.west_beginner_colour,
+                "The color of the fog on the west side for beginner and intro");
+
+            configFogColourSleeperEast = Config.Bind("Fog",
+                "FogColourSleeperEast",
+                PostProcessTweaks.east_sleeper_colour,
+                "The color of the fog on the east side for sleeper");
+
+            configFogColourSleeperWest = Config.Bind("Fog",
+                "FogColourSleeperWest",
+                PostProcessTweaks.west_sleeper_colour,
+                "The color of the fog on the west side for sleeper");
+
+            configFogColourSleepwalkerEast = Config.Bind("Fog",
+                "FogColourSleepwalkerEast",
+                PostProcessTweaks.east_sleepwalker_colour,
+                "The color of the fog on the east side for sleepwalker");
+
+            configFogColourSleepwalkerWest = Config.Bind("Fog",
+                "FogColourSleepwalkerWest",
+                PostProcessTweaks.west_sleepwalker_colour,
+                "The color of the fog on the west side for sleepwalker");
+
+            configFogColourFireEast = Config.Bind("Fog",
+                "FogColourFireEast",
+                PostProcessTweaks.east_fire_colour,
+                "The color of the fog on the east side for liminal");
+
+            configFogColourFireWest = Config.Bind("Fog",
+                "FogColourFireWest",
+                PostProcessTweaks.west_fire_colour,
+                "The color of the fog on the west side for liminal");
+
+            configFogColourAwakeEast = Config.Bind("Fog",
+                "FogColourAwakeEast",
+                PostProcessTweaks.east_awake_colour,
+                "The color of the fog on the east side for awake");
+
+            configFogColourAwakeWest = Config.Bind("Fog",
+                "FogColourAwakeWest",
+                PostProcessTweaks.west_awake_colour,
+                "The color of the fog on the west side for awake");
+
+            configFogColourOtherEast = Config.Bind("Fog",
+                "FogColourOtherEast",
+                PostProcessTweaks.east_other_colour,
+                "The color of the fog on the east side for the Compound, etc...");
+
+            configFogColourOtherWest = Config.Bind("Fog",
+                "FogColourOtherWest",
+                PostProcessTweaks.west_other_colour,
+                "The color of the fog on the west side for the Compound, etc...");
 
             //Flashlight disco config
             configDiscoFlashlight = Config.Bind("Fun stuff",
@@ -165,6 +245,7 @@ namespace CiarenceUnbelievableModifications
                 FlashlightTweaks.verbose = configVerboseDebugEnabled.Value;
                 TurretAmmoBoxBoom.verbose = configVerboseDebugEnabled.Value;
                 RobotTweaks.verbose = configVerboseDebugEnabled.Value;
+                PostProcessTweaks.verbose = configVerboseDebugEnabled.Value;
             };
 
             configDropGunEverywhere.SettingChanged += (object sender, EventArgs args) =>
@@ -177,6 +258,78 @@ namespace CiarenceUnbelievableModifications
             {
                 if (configTurretAmmoBoxBoom.Value) TurretAmmoBoxBoom.Enable();
                 else TurretAmmoBoxBoom.Disable();
+            };
+
+            configFogColourBeginnerEast.SettingChanged += (object sender, EventArgs args) =>
+            {
+                PostProcessTweaks.east_beginner_colour = configFogColourBeginnerEast.Value;
+                PostProcessTweaks.UpdateFogColour();
+            };
+
+            configFogColourBeginnerWest.SettingChanged += (object sender, EventArgs args) =>
+            {
+                PostProcessTweaks.west_beginner_colour = configFogColourBeginnerWest.Value;
+                PostProcessTweaks.UpdateFogColour();
+            };
+
+            configFogColourSleeperEast.SettingChanged += (object sender, EventArgs args) =>
+            {
+                PostProcessTweaks.east_sleeper_colour = configFogColourSleeperEast.Value;
+                PostProcessTweaks.UpdateFogColour();
+            };
+
+            configFogColourSleeperWest.SettingChanged += (object sender, EventArgs args) =>
+            {
+                PostProcessTweaks.west_sleeper_colour = configFogColourSleeperWest.Value;
+                PostProcessTweaks.UpdateFogColour();
+            };
+
+            configFogColourSleepwalkerEast.SettingChanged += (object sender, EventArgs args) =>
+            {
+                PostProcessTweaks.east_sleepwalker_colour = configFogColourSleepwalkerEast.Value;
+                PostProcessTweaks.UpdateFogColour();
+            };
+
+            configFogColourSleepwalkerWest.SettingChanged += (object sender, EventArgs args) =>
+            {
+                PostProcessTweaks.west_sleepwalker_colour = configFogColourSleepwalkerWest.Value;
+                PostProcessTweaks.UpdateFogColour();
+            };
+
+            configFogColourFireEast.SettingChanged += (object sender, EventArgs args) =>
+            {
+                PostProcessTweaks.east_fire_colour = configFogColourFireEast.Value;
+                PostProcessTweaks.UpdateFogColour();
+            };
+
+            configFogColourFireWest.SettingChanged += (object sender, EventArgs args) =>
+            {
+                PostProcessTweaks.west_fire_colour = configFogColourFireWest.Value;
+                PostProcessTweaks.UpdateFogColour();
+            };
+
+            configFogColourAwakeEast.SettingChanged += (object sender, EventArgs args) =>
+            {
+                PostProcessTweaks.east_awake_colour = configFogColourAwakeEast.Value;
+                PostProcessTweaks.UpdateFogColour();
+            };
+
+            configFogColourAwakeWest.SettingChanged += (object sender, EventArgs args) =>
+            {
+                PostProcessTweaks.west_awake_colour = configFogColourAwakeWest.Value;
+                PostProcessTweaks.UpdateFogColour();
+            };
+
+            configFogColourOtherEast.SettingChanged += (object sender, EventArgs args) =>
+            {
+                PostProcessTweaks.east_other_colour = configFogColourOtherEast.Value;
+                PostProcessTweaks.UpdateFogColour();
+            };
+
+            configFogColourOtherWest.SettingChanged += (object sender, EventArgs args) =>
+            {
+                PostProcessTweaks.west_other_colour = configFogColourOtherWest.Value;
+                PostProcessTweaks.UpdateFogColour();
             };
 
             configEnableTurretDiscoLights.SettingChanged += (object sender, EventArgs args) =>
@@ -281,6 +434,7 @@ namespace CiarenceUnbelievableModifications
             Harmony.CreateAndPatchAll(typeof(RobotTweaks.DroneSetLightModeTranspiler));
 
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(OnInitialize));
+            ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(PostProcessTweaks.OnPlayerInitialize));
         }
 
         private void OnInitialize(ReceiverEventTypeVoid ev)
