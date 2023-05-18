@@ -13,6 +13,9 @@ Press **"X"** by default to toggle the flashlight.
 You can choose a custom colour for the flashlight!  
 Also fixes a bug where the smoke cone's opacity wouldn't lower, even when the flashlight was out of battery.
 
+### PostProcessTweaks
+You can now change the colour of the fog :D
+
 ### DropGunEverywhere
 Allow you to drop your gun in any scene, anytime.
 
