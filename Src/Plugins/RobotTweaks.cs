@@ -17,6 +17,10 @@ namespace CiarenceUnbelievableModifications
         public static Color colour_alert;
         public static Color colour_alert_shooting;
 
+        public static Color colour_idle_turret;
+        public static Color colour_alert_turret;
+        public static Color colour_attacking_turret;
+
         public static Color colour_idle_drone;
         public static Color colour_alert_drone;
         public static Color colour_attacking_drone;
@@ -24,6 +28,14 @@ namespace CiarenceUnbelievableModifications
         public static Color colour_idle_camera;
         public static Color colour_alert_camera;
         public static Color colour_alarming_camera;
+
+        public readonly static Color tc_colour_idle = Color.red;
+        public readonly static Color tc_colour_alert = Color.white;
+        public readonly static Color tc_colour_attack = new Color(1f, 0.25f, 0f);
+
+        public static Color colour_override_idle;
+        public static Color colour_override_alert;
+        public static Color colour_override_attack;
 
         private static float colour_a = 0f;
         private static float colour_b = 0.5f;
@@ -37,17 +49,16 @@ namespace CiarenceUnbelievableModifications
 
         public static bool verbose;
 
+        public static bool campaign_has_override;
+
         [HarmonyPatch(typeof(ReceiverCoreScript), "Awake")]
         [HarmonyPostfix]
         private static void PatchCoreAwake(ref ReceiverCoreScript __instance)
         {
             var bomb_bot = __instance.enemy_prefabs.bomb_bot.GetComponent<BombBotScript>();
 
-            //this doesn't currently do anything, I think it used to talk and stuff and it was cool but it doesn't anymore. It just beeps. Capitalism. Also it used to soft-crash (is that a thing)
+            //this doesn't currently do anything, I think it used to talk and stuff and it was cool but it doesn't anymore. It just beeps. Capitalism. Also, if you don't change it to a valid event like the one below, it used to soft-crash (is that a thing)
             bomb_bot.voice_filter = "event:/TextToSpeech/TextToSpeech - bomb bot";
-
-            //AccessTools.Field(typeof(LightPart), "passive_color").SetValue(__instance.enemy_prefabs.shock_drone.GetComponent<ShockDrone>().light_part, new Color(1f, 0f, 1f, 1f));
-            //AccessTools.Field(typeof(LightPart), "light_color").SetValue(__instance.enemy_prefabs.shock_drone.GetComponent<ShockDrone>().light_part, new Color(1f, 0f, 1f, 1f));
         }
 
         //bear with me here but, wouldn't it be crazy if there were actual fucking tutorials for this sort of things?
@@ -108,23 +119,25 @@ namespace CiarenceUnbelievableModifications
                 switch (state)
                 {
                     case ShockDroneState.Idle:
-                        light_color.SetValue(__instance, colour_idle_drone);
+                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_idle : colour_idle_drone);
                         return;
                     case ShockDroneState.Alert:
                     case ShockDroneState.TrackPlayer:
                     case ShockDroneState.Ramming:
-                        light_color.SetValue(__instance, colour_alert_drone);
+                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_alert : colour_alert_drone);
                         return;
                     case ShockDroneState.Attacking:
-                        light_color.SetValue(__instance, colour_attacking_drone);
+                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_attack : colour_attacking_drone);
                         return;
                     case ShockDroneState.Standby:
                         var passive_colour = colour_idle_drone;
                         passive_colour.a = 0f;
-                        light_color.SetValue(__instance, passive_colour);
+                        var passive_colour_override = colour_override_idle;
+                        passive_colour_override.a = 0f;
+                        light_color.SetValue(__instance, (campaign_has_override) ? passive_colour_override : passive_colour);
                         return;
                     default:
-                        light_color.SetValue(__instance, colour_idle_drone);
+                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_idle : colour_idle_drone);
                         return;
                 }
             }
@@ -138,109 +151,74 @@ namespace CiarenceUnbelievableModifications
                 switch (state)
                 {
                     case SecurityCameraState.Idle:
-                        light_color.SetValue(__instance, colour_idle_camera);
+                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_idle : colour_idle_camera);
                         return;
                     case SecurityCameraState.Alert:
-                        light_color.SetValue(__instance, colour_alert_camera);
+                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_alert : colour_alert_camera);
                         return;
                     case SecurityCameraState.Alarm:
-                        light_color.SetValue(__instance, colour_alarming_camera);
+                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_attack : colour_alarming_camera);
                         return;
                     case SecurityCameraState.Off:
                         var passive_colour = colour_idle_camera;
                         passive_colour.a = 0f;
-                        light_color.SetValue(__instance, passive_colour);
+                        var passive_colour_override = colour_override_idle;
+                        passive_colour_override.a = 0f;
+                        light_color.SetValue(__instance,  (campaign_has_override) ? passive_colour_override : passive_colour);
                         return;
                     default:
-                        light_color.SetValue(__instance, colour_idle_camera);
+                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_idle : colour_idle_camera);
                         return;
                 }
             }
             if (verbose) Debug.LogError("fucksguhuogsrgksgsfsgehlfse");
-            //var light_colour = (Color)AccessTools.Field(typeof(LightPart), "light_color").GetValue(__instance);
-            //light_colour = new Color(0f, 1f, 1f, 1f);
-            //Debug.Log("THIS PISS OF SHIT DOESN'T FUKING WORKY!!!!!");
         }
 
-        [HarmonyPatch(typeof(LightPart), "SetLightMode")]
-        public static class DroneSetLightModeTranspiler
+        //for the turrets' camera colours when in TC, you can't change from which field the thing is read during runtime I think with Transpilers.
+        public static void OnPlayerInitialize(ReceiverEventTypeVoid ev)
         {
-            //private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase __originalMethod)
-            //{
-            //    CodeMatcher codeMatcher = new CodeMatcher(instructions, generator).MatchForward(false, new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(LightPart), "SetLightColor")));
+            if (ReceiverCoreScript.Instance().game_mode.GetGameMode() != GameMode.RankingCampaign) return;
 
-            //    if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
-            //    {
-            //        codeMatcher
-            //            .SetOpcodeAndAdvance(OpCodes.Ldarg_0)
-            //            .SetAndAdvance(OpCodes.Ldfld, AccessTools.Field(typeof(RobotTweaks), "colour_normal"))
-            //            .InsertAndAdvance(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Component), "get_transform")))
-            //            .InsertAndAdvance(new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Transform), "get_root")))
-            //            .InsertAndAdvance(new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Component), "GetComponent", null, new System.Type[] { typeof(ShockDrone) })))
-            //            .InsertAndAdvance(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Object), "op_Implicit")))
-            //            .InsertBranchAndAdvance(OpCodes.Brfalse_S, codeMatcher.Pos)
-            //            .SetOpcodeAndAdvance(OpCodes.Ldarg_0)
-            //            .SetOpcodeAndAdvance(OpCodes.Ldarg_0)
-            //            .SetAndAdvance(OpCodes.Ldfld, AccessTools.Field(typeof(RobotTweaks), "colour_alert"))
-            //            .SetAndAdvance(OpCodes.Ldc_R4, 3f)
-            //            .InsertAndAdvance(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(LightPart), "SetLightColor")))
-            //            ;
-            //    }
-
-
-            //    if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
-            //    {
-            //        codeMatcher
-            //            .SetAndAdvance(OpCodes.Ldfld, AccessTools.Field(typeof(RobotTweaks), "colour_normal"));
-            //    }
-
-
-            //    if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
-            //    {
-            //        codeMatcher
-            //            .SetAndAdvance(OpCodes.Ldfld, AccessTools.Field(typeof(RobotTweaks), "colour_normal"));
-            //    }
-
-            //    return codeMatcher.InstructionEnumeration();
-            //}
+            FieldInfo campaign_name = typeof(RankingProgressionGameMode).GetField("campaign_name", BindingFlags.Instance | BindingFlags.NonPublic);
+            RankingProgressionGameMode rpgm = ReceiverCoreScript.Instance().game_mode.GetComponent<RankingProgressionGameMode>();
+            if (verbose) Debug.Log(campaign_name.GetValue(rpgm));
+            if ((string)campaign_name.GetValue(rpgm) != "bozo_torture_campaign")
+            {
+                campaign_has_override = false;
+                colour_normal = colour_idle_turret;
+                colour_alert = colour_alert_turret;
+                colour_alert_shooting = colour_attacking_turret;
+                return;
+            }
+            campaign_has_override = true;
+            colour_override_idle = tc_colour_idle;
+            colour_override_alert = tc_colour_alert;
+            colour_override_attack = tc_colour_attack;
+            colour_normal = colour_override_idle;
+            colour_alert = colour_override_alert;
+            colour_alert_shooting = colour_override_attack;
+            if (verbose) Debug.Log("player is bozo");
         }
 
-        //      /* (19,6)-(19,52) main.cs */
-        //      /* 0x00000028 02           */
-        //      IL_0028: ldarg.0
-        ///* 0x00000029 28????????   */ IL_0029: call instance class [UnityEngine.CoreModule]
-        //      UnityEngine.Transform[UnityEngine.CoreModule] UnityEngine.Component::get_transform()
-        //      /* 0x0000002E 6F????????   */
-        //                                    IL_002E: callvirt instance class [UnityEngine.CoreModule]
-        //      UnityEngine.Transform[UnityEngine.CoreModule] UnityEngine.Transform::get_root()
-        //      /* 0x00000033 6F????????   */
-        //                                    IL_0033: callvirt instance !!0 [UnityEngine.CoreModule] UnityEngine.Component::GetComponent<class Receiver2.ShockDrone>()
-        //      /* 0x00000038 28????????   */ IL_0038: call bool[UnityEngine.CoreModule] UnityEngine.Object::op_Implicit(class [UnityEngine.CoreModule] UnityEngine.Object)
-        ///* 0x0000003D 2C11         */ IL_003D: brfalse.s IL_0050
-
-        //      /* (21,7)-(21,51) main.cs */
-        //      /* 0x0000003F 02           */
-        //                                    IL_003F: ldarg.0
-        ///* 0x00000040 02           */ IL_0040: ldarg.0
-        ///* 0x00000041 7BD3150004   */ IL_0041: ldfld valuetype[UnityEngine.CoreModule]UnityEngine.Color Receiver2.LightPart::override_color
-        //      /* 0x00000046 2200004040   */ IL_0046: ldc.r4    3
-        //      /* 0x0000004B 28A9130006   */ IL_004B: call instance void Receiver2.LightPart::SetLightColor(valuetype[UnityEngine.CoreModule] UnityEngine.Color, float32)
         public static void Discolights()
         {
-            if (colour_a == random_a) random_a = Random.Range(0f, 1f);
-            if (colour_b == random_b) random_b = Random.Range(0f, 1f);
-            if (colour_c == random_c) random_c = Random.Range(0f, 1f);
+            if (!campaign_has_override)
+            {
+                if (colour_a == random_a) random_a = Random.Range(0f, 1f);
+                if (colour_b == random_b) random_b = Random.Range(0f, 1f);
+                if (colour_c == random_c) random_c = Random.Range(0f, 1f);
 
-            //if you set disco_timescale to 0 it changes lights every frame, also how the fuck? it's a division by zero how does it work
-            colour_a = Mathf.MoveTowards(colour_a, random_a, Time.deltaTime / disco_timescale);
-            colour_b = Mathf.MoveTowards(colour_b, random_b, Time.deltaTime / disco_timescale);
-            colour_c = Mathf.MoveTowards(colour_c, random_c, Time.deltaTime / disco_timescale);
+                //if you set disco_timescale to 0 it changes lights every frame, also how the fuck? it's a division by zero how does it work
+                colour_a = Mathf.MoveTowards(colour_a, random_a, Time.deltaTime / disco_timescale);
+                colour_b = Mathf.MoveTowards(colour_b, random_b, Time.deltaTime / disco_timescale);
+                colour_c = Mathf.MoveTowards(colour_c, random_c, Time.deltaTime / disco_timescale);
 
-            Color rainbow_colour = new Color(colour_a, colour_b, colour_c);
+                Color rainbow_colour = new Color(colour_a, colour_b, colour_c);
 
-            colour_normal = rainbow_colour;
-            colour_idle_drone = rainbow_colour;
-            colour_idle_camera = rainbow_colour;
+                colour_normal = rainbow_colour;
+                colour_idle_drone = rainbow_colour;
+                colour_idle_camera = rainbow_colour;
+            }
         }
     }
 }

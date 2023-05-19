@@ -13,7 +13,7 @@ namespace CiarenceUnbelievableModifications
     {
         private static LocalAimHandler lah;
         private static ReceiverFog receiver_fog;
-        public static bool verbose = true;
+        public static bool verbose;
 
         public static Color east_beginner_colour = new Color(0.5f, 0.2f, 1f);
         public static Color west_beginner_colour = new Color(0.5f, 1f, 0.2f);
@@ -35,6 +35,9 @@ namespace CiarenceUnbelievableModifications
 
         public static Color GetCurrentColourEast()
         {
+            //as it turns out, when you go from the dreaming to the compound, the WorldGenerationConfiguration.level_name doesn't get cleared.
+            if (ReceiverCoreScript.Instance().game_mode.GetGameMode() != GameMode.RankingCampaign) 
+                return east_other_colour;
             switch (ReceiverCoreScript.Instance().WorldGenerationConfiguration.level_name)
             {
                 case "introduction":
@@ -55,6 +58,8 @@ namespace CiarenceUnbelievableModifications
 
         public static Color GetCurrentColourWest()
         {
+            if (ReceiverCoreScript.Instance().game_mode.GetGameMode() != GameMode.RankingCampaign)
+                return west_other_colour;
             switch (ReceiverCoreScript.Instance().WorldGenerationConfiguration.level_name)
             {
                 case "introduction":

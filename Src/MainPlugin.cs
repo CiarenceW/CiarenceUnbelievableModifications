@@ -15,7 +15,7 @@ namespace CiarenceUnbelievableModifications
     {
         //all this kinda sucks, like, I probably should've tried to uniform everything and stuff. But I started doing all that at 3am and can't currently be arsed to make it all better. So oops.
         private ConfigEntry<bool> configVerboseDebugEnabled;
-        private ConfigEntry<bool> configFogColourChangerEnabled;
+        private ConfigEntry<bool> configKilldroneColourOverride;
         private ConfigEntry<Color> configFogColourBeginnerEast;
         private ConfigEntry<Color> configFogColourBeginnerWest;
         private ConfigEntry<Color> configFogColourSleeperEast;
@@ -66,10 +66,10 @@ namespace CiarenceUnbelievableModifications
                 "Enable the flashlight tweaks");
 
             //Fog tweaks config
-            configFogColourChangerEnabled = Config.Bind("General",
-                "FogColourChanger",
+            configKilldroneColourOverride = Config.Bind("Custom campaign",
+                "KilldroneColourOverride",
                 true,
-                "Enable the fog colour tweaks");
+                "Enables custom colour for the killdrones on specific campaigns");
 
             //Fog Colour tweaks config
             configFogColourBeginnerEast = Config.Bind("Fog",
@@ -362,46 +362,45 @@ namespace CiarenceUnbelievableModifications
                 FlashlightTweaks.UpdateFlashlightColours();
             };
 
-
             configDroneColourIdle.SettingChanged += (object sender, EventArgs args) =>
             {
-                RobotTweaks.colour_idle_drone = configDroneColourIdle.Value;
+                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_idle_drone = configDroneColourIdle.Value;
             };
             configDroneColourAlert.SettingChanged += (object sender, EventArgs args) =>
             {
-                RobotTweaks.colour_alert_drone = configDroneColourAlert.Value;
+                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_alert_drone = configDroneColourAlert.Value;
             };
             configDroneColourAttacking.SettingChanged += (object sender, EventArgs args) =>
             {
-                RobotTweaks.colour_attacking_drone = configDroneColourAttacking.Value;
+                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_attacking_drone = configDroneColourAttacking.Value;
             };
 
 
             configCameraColourIdle.SettingChanged += (object sender, EventArgs args) =>
             {
-                RobotTweaks.colour_idle_camera = configCameraColourIdle.Value;
+                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_idle_camera = configCameraColourIdle.Value;
             };
             configCameraColourAlert.SettingChanged += (object sender, EventArgs args) =>
             {
-                RobotTweaks.colour_alert_camera = configCameraColourAlert.Value;
+                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_alert_camera = configCameraColourAlert.Value;
             };
             configCameraColourAlarming.SettingChanged += (object sender, EventArgs args) =>
             {
-                RobotTweaks.colour_alarming_camera = configCameraColourAlarming.Value;
+                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_alarming_camera = configCameraColourAlarming.Value;
             };
 
 
             configTurretColourNormal.SettingChanged += (object sender, EventArgs args) =>
             {
-                RobotTweaks.colour_normal = configTurretColourNormal.Value;
+                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_normal = configTurretColourNormal.Value;
             };
             configTurretColourAlert.SettingChanged += (object sender, EventArgs args) =>
             {
-                RobotTweaks.colour_alert = configTurretColourAlert.Value;
+                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_alert = configTurretColourAlert.Value;
             };
             configTurretColourAlertShooting.SettingChanged += (object sender, EventArgs args) =>
             {
-                RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
+                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
             };
 
             FlashlightTweaks.flashlight_color = configFlashlightColour.Value;
@@ -418,23 +417,26 @@ namespace CiarenceUnbelievableModifications
             RobotTweaks.colour_normal = configTurretColourNormal.Value;
             RobotTweaks.colour_alert = configTurretColourAlert.Value;
             RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
+
+            RobotTweaks.colour_idle_turret = configTurretColourNormal.Value;
+            RobotTweaks.colour_alert_turret = configTurretColourAlert.Value;
+            RobotTweaks.colour_attacking_turret = configTurretColourAlertShooting.Value;
+
             RobotTweaks.disco_timescale = configDiscoTimescale.Value;
             FlashlightTweaks.disco_timescale = configDiscoTimescale.Value;
 
             if (configTurretAmmoBoxBoom.Value) TurretAmmoBoxBoom.Enable();
-            else TurretAmmoBoxBoom.Disable();
 
             if (configDropGunEverywhere.Value) DropGunEverywhere.Enable();
-            else DropGunEverywhere.Disable();
 
             if (configGunTweaks.Value) Harmony.CreateAndPatchAll(typeof(GunTweaks));
             if (configRobotTweaks.Value) Harmony.CreateAndPatchAll(typeof(RobotTweaks));
             if (configVictorianFix.Value) Harmony.CreateAndPatchAll(typeof(VictorianFix));
             Harmony.CreateAndPatchAll(typeof(RobotTweaks.TurretLightUpdateTranspiler));
-            Harmony.CreateAndPatchAll(typeof(RobotTweaks.DroneSetLightModeTranspiler));
 
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(OnInitialize));
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(PostProcessTweaks.OnPlayerInitialize));
+            ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(RobotTweaks.OnPlayerInitialize));
         }
 
         private void OnInitialize(ReceiverEventTypeVoid ev)
