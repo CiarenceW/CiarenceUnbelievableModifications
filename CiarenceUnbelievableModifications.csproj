@@ -27,11 +27,14 @@
     <Reference Include="BepInEx">
       <HintPath>..\Binaries\BepInEx.dll</HintPath>
     </Reference>
+    <Reference Include="BepInEx.Harmony">
+      <HintPath>C:\Users\ciarence\source\repos\MagLoaderThing\Librairies\BepInEx.Harmony.dll</HintPath>
+    </Reference>
     <Reference Include="Receiver2ModdingKit">
-      <HintPath>..\Binaries\Receiver2ModdingKit.dll</HintPath>
+      <HintPath>..\LibrairiesR2\Receiver2ModdingKit.dll</HintPath>
     </Reference>
     <Reference Include="SimpleJSON">
-      <HintPath>..\Binaries\SimpleJSON.dll</HintPath>
+      <HintPath>..\..\R2\Receiver2\Receiver2_Data\Managed\SimpleJSON.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>..\Binaries\UnityEngine.dll</HintPath>
@@ -42,17 +45,14 @@
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>..\Binaries\UnityEngine.PhysicsModule.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>..\Binaries\UnityEngine.UI.dll</HintPath>
-    </Reference>
     <Reference Include="VolumetricLightBeam.Core">
-      <HintPath>..\Binaries\VolumetricLightBeam.Core.dll</HintPath>
+      <HintPath>..\..\R2\Receiver2\Receiver2_Data\Managed\VolumetricLightBeam.Core.dll</HintPath>
     </Reference>
     <Reference Include="Wolfire">
-      <HintPath>..\Binaries\Wolfire.dll</HintPath>
+      <HintPath>C:\Users\ciarence\source\repos\MagLoaderThing\Librairies\Wolfire.dll</HintPath>
     </Reference>
     <Reference Include="Wolfire.Receiver2">
-      <HintPath>..\Binaries\Wolfire.Receiver2.dll</HintPath>
+      <HintPath>C:\Users\ciarence\source\repos\MagLoaderThing\Librairies\Wolfire.Receiver2.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>

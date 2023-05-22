@@ -160,6 +160,9 @@ namespace CiarenceUnbelievableModifications
             if (configGunTweaks.Value) Harmony.CreateAndPatchAll(typeof(GunTweaks));
             if (configRobotTweaks.Value) Harmony.CreateAndPatchAll(typeof(RobotTweaks));
             if (configVictorianFix.Value) Harmony.CreateAndPatchAll(typeof(VictorianFix));
+            Harmony.CreateAndPatchAll(typeof(RobotTweaks.TurretLightUpdateTranspiler));
+            Harmony.CreateAndPatchAll(typeof(RobotTweaks.DroneSetLightModeTranspiler));
+            Harmony.CreateAndPatchAll(typeof(RobotTweaks.TripmineLightUpdateTranspiler));
 
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(OnInitialize));
         }
