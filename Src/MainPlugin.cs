@@ -28,6 +28,7 @@ namespace CiarenceUnbelievableModifications
         private ConfigEntry<Color> configFogColourAwakeWest;
         private ConfigEntry<Color> configFogColourOtherEast;
         private ConfigEntry<Color> configFogColourOtherWest;
+        private ConfigEntry<Color> configTripmineLaserColour;
         private ConfigEntry<bool> configFlashlightTweaks;
         private ConfigEntry<bool> configDiscoFlashlight;
         private ConfigEntry<Color> configFlashlightColour;
@@ -131,6 +132,12 @@ namespace CiarenceUnbelievableModifications
                 "FogColourOtherWest",
                 PostProcessTweaks.west_other_colour,
                 "The color of the fog on the west side for the Compound, etc...");
+
+            //Tripmine colour config
+            configTripmineLaserColour = Config.Bind("Tripmine Colour",
+                "TripmineLaserColour",
+                Color.red,
+                "The colour of the tripmines' laser");
 
             //Flashlight disco config
             configDiscoFlashlight = Config.Bind("Fun stuff",
@@ -332,6 +339,11 @@ namespace CiarenceUnbelievableModifications
                 PostProcessTweaks.UpdateFogColour();
             };
 
+            configTripmineLaserColour.SettingChanged += (object sender, EventArgs args) =>
+            {
+                RobotTweaks.tripmine_beam_colour = configTripmineLaserColour.Value;
+            };
+
             configEnableTurretDiscoLights.SettingChanged += (object sender, EventArgs args) =>
             {
                 if (!configEnableTurretDiscoLights.Value)
@@ -422,6 +434,8 @@ namespace CiarenceUnbelievableModifications
             RobotTweaks.colour_alert_turret = configTurretColourAlert.Value;
             RobotTweaks.colour_attacking_turret = configTurretColourAlertShooting.Value;
 
+            RobotTweaks.tripmine_beam_colour = configTripmineLaserColour.Value;
+
             RobotTweaks.disco_timescale = configDiscoTimescale.Value;
             FlashlightTweaks.disco_timescale = configDiscoTimescale.Value;
 
@@ -437,7 +451,6 @@ namespace CiarenceUnbelievableModifications
 
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(OnInitialize));
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(PostProcessTweaks.OnPlayerInitialize));
-            ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(RobotTweaks.OnPlayerInitialize));
         }
 
         private void OnInitialize(ReceiverEventTypeVoid ev)

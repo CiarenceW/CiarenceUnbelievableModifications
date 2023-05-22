@@ -37,7 +37,7 @@
       <HintPath>..\..\R2\Receiver2\Receiver2_Data\Managed\SimpleJSON.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Postprocessing.Runtime">
-      <HintPath>..\Binaries\Unity.Postprocessing.Runtime.dll</HintPath>
+      <HintPath>..\..\R2\Receiver2\Receiver2_Data\Managed\Unity.Postprocessing.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>..\Binaries\UnityEngine.dll</HintPath>

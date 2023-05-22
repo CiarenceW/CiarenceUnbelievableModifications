@@ -110,20 +110,24 @@ namespace CiarenceUnbelievableModifications
             }
         }
 
+        //I don't have a good experience with trying to change the colour of all instances of a light, so I'm using the tried and tested transpiler to do it class-level.
         [HarmonyPatch(typeof(TripMineBot), "Update")]
         public static class TripmineUpdateTranspiler
         {
             private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase __originalMethod)
             {
-                CodeMatcher codeMatcher = new CodeMatcher(instructions, generator).MatchForward(false, new CodeMatch(OpCodes.Ldsfld, AccessTools.Method(typeof(LocalAimHandler), "player_instance")));
+                CodeMatcher codeMatcher = new CodeMatcher(instructions, generator).MatchForward(false, new CodeMatch(OpCodes.Ldsfld, AccessTools.Field(typeof(LocalAimHandler), "player_instance")));
 
                 if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
                 {
                     codeMatcher
-                        .SetOpcodeAndAdvance(OpCodes.Ldarg_0)
-                        .SetAndAdvance(OpCodes.Ldfld, AccessTools.Field(typeof(TripMineBot), "light_beam"))
-                        .SetAndAdvance(OpCodes.Ldsfld, AccessTools.Field(typeof(RobotTweaks), "tripmine_beam_colour"))
-                        .InsertAndAdvance(new CodeInstruction(OpCodes.Stfld, AccessTools.Method(typeof(VolumetricLightBeam), "color", new System.Type[] { typeof(Color) })));
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(TripMineBot), "light_beam")))
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(RobotTweaks), "tripmine_beam_colour")))
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(VolumetricLightBeam), "color")))
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(TripMineBot), "light_beam")))
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(VolumetricLightBeam), nameof(VolumetricLightBeam.UpdateAfterManualPropertyChange))));
                 }
                 return codeMatcher.InstructionEnumeration();
             }
