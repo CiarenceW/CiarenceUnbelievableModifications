@@ -28,7 +28,7 @@ namespace CiarenceUnbelievableModifications
         private ConfigEntry<Color> configFogColourAwakeWest;
         private ConfigEntry<Color> configFogColourOtherEast;
         private ConfigEntry<Color> configFogColourOtherWest;
-        private ConfigEntry<Color> configTripmineLaserColour;
+        private ConfigEntry<Color> configTripmineBeamColour;
         private ConfigEntry<bool> configFlashlightTweaks;
         private ConfigEntry<bool> configDiscoFlashlight;
         private ConfigEntry<Color> configFlashlightColour;
@@ -133,11 +133,11 @@ namespace CiarenceUnbelievableModifications
                 PostProcessTweaks.west_other_colour,
                 "The color of the fog on the west side for the Compound, etc...");
 
-            //Tripmine colour config
-            configTripmineLaserColour = Config.Bind("Tripmine Colour",
-                "TripmineLaserColour",
+            //Tripmine beam colour
+            configTripmineBeamColour = Config.Bind("Tripmine",
+                "TripmineBeamColour",
                 Color.red,
-                "The colour of the tripmines' laser");
+                "The colour of the tripmine's light beam");
 
             //Flashlight disco config
             configDiscoFlashlight = Config.Bind("Fun stuff",
@@ -253,7 +253,6 @@ namespace CiarenceUnbelievableModifications
                 TurretAmmoBoxBoom.verbose = configVerboseDebugEnabled.Value;
                 RobotTweaks.verbose = configVerboseDebugEnabled.Value;
                 PostProcessTweaks.verbose = configVerboseDebugEnabled.Value;
-                VictorianFix.verbose = configVerboseDebugEnabled.Value;
             };
 
             configDropGunEverywhere.SettingChanged += (object sender, EventArgs args) =>
@@ -340,9 +339,9 @@ namespace CiarenceUnbelievableModifications
                 PostProcessTweaks.UpdateFogColour();
             };
 
-            configTripmineLaserColour.SettingChanged += (object sender, EventArgs args) =>
+            configTripmineBeamColour.SettingChanged += (object sender, EventArgs args) =>
             {
-                RobotTweaks.tripmine_beam_colour = configTripmineLaserColour.Value;
+                RobotTweaks.tripmine_beam_colour = configTripmineBeamColour.Value;
             };
 
             configEnableTurretDiscoLights.SettingChanged += (object sender, EventArgs args) =>
@@ -416,14 +415,10 @@ namespace CiarenceUnbelievableModifications
                 if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
             };
 
-            FlashlightTweaks.verbose = configVerboseDebugEnabled.Value;
-            TurretAmmoBoxBoom.verbose = configVerboseDebugEnabled.Value;
-            RobotTweaks.verbose = configVerboseDebugEnabled.Value;
-            PostProcessTweaks.verbose = configVerboseDebugEnabled.Value;
-            VictorianFix.verbose = configVerboseDebugEnabled.Value;
-
             FlashlightTweaks.flashlight_color = configFlashlightColour.Value;
             FlashlightTweaks.UpdateFlashlightColours();
+
+            RobotTweaks.tripmine_beam_colour = configTripmineBeamColour.Value;
 
             RobotTweaks.colour_idle_drone = configDroneColourIdle.Value;
             RobotTweaks.colour_alert_drone = configDroneColourAlert.Value;
@@ -441,8 +436,6 @@ namespace CiarenceUnbelievableModifications
             RobotTweaks.colour_alert_turret = configTurretColourAlert.Value;
             RobotTweaks.colour_attacking_turret = configTurretColourAlertShooting.Value;
 
-            RobotTweaks.tripmine_beam_colour = configTripmineLaserColour.Value;
-
             RobotTweaks.disco_timescale = configDiscoTimescale.Value;
             FlashlightTweaks.disco_timescale = configDiscoTimescale.Value;
 
@@ -458,6 +451,7 @@ namespace CiarenceUnbelievableModifications
 
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(OnInitialize));
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(PostProcessTweaks.OnPlayerInitialize));
+            ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(RobotTweaks.OnPlayerInitialize));
 
             Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchBombBotPrefab));
         }
