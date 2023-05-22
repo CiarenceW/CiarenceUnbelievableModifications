@@ -20,6 +20,18 @@ namespace CiarenceUnbelievableModifications
         private static VLB.VolumetricLightBeam vlb;
         public static bool verbose;
 
+        public static Color flashlight_color;
+
+        private static float colour_a = 0f;
+        private static float colour_b = 0.5f;
+        private static float colour_c = 1f;
+
+        private static float random_a;
+        private static float random_b;
+        private static float random_c;
+
+        public static int disco_timescale;
+
         public static void UpdateFlashlight(KeyCode toggleKey)
         {
             if (LocalAimHandler.TryGetInstance(out lah))
@@ -32,7 +44,7 @@ namespace CiarenceUnbelievableModifications
                     }
                     if (Input.GetKeyDown(toggleKey))
                     {
-                        if(verbose) Debug.LogFormat("{0} pressed", toggleKey);
+                        if (verbose) Debug.LogFormat("{0} pressed", toggleKey);
                         LocalAimHandler.Flashlight.TogglePower();
                     }
                     vlb = LocalAimHandler.Flashlight.spot_light.transform.GetComponent<VLB.VolumetricLightBeam>();
@@ -51,9 +63,43 @@ namespace CiarenceUnbelievableModifications
                             drop_button_released_time = float.MaxValue;
                         }
                     }
+                    UpdateFlashlightColours();
                 }
             }
         }
 
+        public static void UpdateFlashlightColours()
+        {
+            if (LocalAimHandler.Flashlight != null)
+            {
+                LocalAimHandler.Flashlight.spot_light.color = flashlight_color;
+                LocalAimHandler.Flashlight.point_light.color = flashlight_color;
+                LocalAimHandler.Flashlight.point_light2.color = flashlight_color;
+                LocalAimHandler.Flashlight.spot_light.transform.GetComponent<VLB.VolumetricLightBeam>().color = new Color(flashlight_color.r, flashlight_color.g, flashlight_color.b);
+            }
+        }
+        public static void Discolights()
+        {
+            if (LocalAimHandler.Flashlight != null)
+            {
+                if (LocalAimHandler.Flashlight.switch_on)
+                {
+                    if (colour_a == random_a) random_a = Random.Range(0f, 1f);
+                    if (colour_b == random_b) random_b = Random.Range(0f, 1f);
+                    if (colour_c == random_c) random_c = Random.Range(0f, 1f);
+
+                    //if you set disco_timescale to 0 it changes lights every frame, also how the fuck? it's a division by zero how does it work
+                    colour_a = Mathf.MoveTowards(colour_a, random_a, Time.deltaTime / disco_timescale);
+                    colour_b = Mathf.MoveTowards(colour_b, random_b, Time.deltaTime / disco_timescale);
+                    colour_c = Mathf.MoveTowards(colour_c, random_c, Time.deltaTime / disco_timescale);
+
+                    Color rainbow_colour = new Color(colour_a, colour_b, colour_c);
+
+                    flashlight_color = rainbow_colour;
+
+                    UpdateFlashlightColours();
+                }
+            }
+        }
     }
 }
