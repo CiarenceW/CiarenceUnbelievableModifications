@@ -18,6 +18,8 @@ namespace CiarenceUnbelievableModifications
         private static TileScript victorian;
         private static bool patched;
 
+        public static bool verbose;
+
         //there are a lot more things that could be done.
         //there's a way to add more spawns, however, doing that by code will be very time consuming.
 
@@ -33,7 +35,7 @@ namespace CiarenceUnbelievableModifications
                 var top_floor_collider_pos = top_floor_collider.localPosition;
                 top_floor_collider_pos.y = 8.37f;
                 top_floor_collider.localPosition = top_floor_collider_pos;
-                Debug.Log("Changed victorian top floor collider position");    
+                if(verbose) Debug.Log("Changed victorian top floor collider position");    
             }
             else
             {

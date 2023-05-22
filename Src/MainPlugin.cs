@@ -253,6 +253,7 @@ namespace CiarenceUnbelievableModifications
                 TurretAmmoBoxBoom.verbose = configVerboseDebugEnabled.Value;
                 RobotTweaks.verbose = configVerboseDebugEnabled.Value;
                 PostProcessTweaks.verbose = configVerboseDebugEnabled.Value;
+                VictorianFix.verbose = configVerboseDebugEnabled.Value;
             };
 
             configDropGunEverywhere.SettingChanged += (object sender, EventArgs args) =>
@@ -415,6 +416,12 @@ namespace CiarenceUnbelievableModifications
                 if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
             };
 
+            FlashlightTweaks.verbose = configVerboseDebugEnabled.Value;
+            TurretAmmoBoxBoom.verbose = configVerboseDebugEnabled.Value;
+            RobotTweaks.verbose = configVerboseDebugEnabled.Value;
+            PostProcessTweaks.verbose = configVerboseDebugEnabled.Value;
+            VictorianFix.verbose = configVerboseDebugEnabled.Value;
+
             FlashlightTweaks.flashlight_color = configFlashlightColour.Value;
             FlashlightTweaks.UpdateFlashlightColours();
 
@@ -451,6 +458,8 @@ namespace CiarenceUnbelievableModifications
 
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(OnInitialize));
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(PostProcessTweaks.OnPlayerInitialize));
+
+            Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchBombBotPrefab));
         }
 
         private void OnInitialize(ReceiverEventTypeVoid ev)

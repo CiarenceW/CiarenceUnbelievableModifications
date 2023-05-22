@@ -54,11 +54,9 @@ namespace CiarenceUnbelievableModifications
 
         public static bool campaign_has_override;
 
-        [HarmonyPatch(typeof(ReceiverCoreScript), "Awake")]
-        [HarmonyPostfix]
-        private static void PatchCoreAwake(ref ReceiverCoreScript __instance)
+        public static void PatchBombBotPrefab()
         {
-            var bomb_bot = __instance.enemy_prefabs.bomb_bot.GetComponent<BombBotScript>();
+            var bomb_bot = ReceiverCoreScript.Instance().enemy_prefabs.bomb_bot.GetComponent<BombBotScript>();
 
             //this doesn't currently do anything, I think it used to talk and stuff and it was cool but it doesn't anymore. It just beeps. Capitalism. Also, if you don't change it to a valid event like the one below, it used to soft-crash (is that a thing)
             bomb_bot.voice_filter = "event:/TextToSpeech/TextToSpeech - bomb bot";
