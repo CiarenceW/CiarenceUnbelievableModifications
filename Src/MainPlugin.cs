@@ -29,6 +29,7 @@ namespace CiarenceUnbelievableModifications
         private ConfigEntry<Color> configFogColourOtherEast;
         private ConfigEntry<Color> configFogColourOtherWest;
         private ConfigEntry<Color> configTripmineBeamColour;
+        private ConfigEntry<Color> configTripmineBeamTriggeredColour;
         private ConfigEntry<bool> configFlashlightTweaks;
         private ConfigEntry<bool> configDiscoFlashlight;
         private ConfigEntry<Color> configFlashlightColour;
@@ -138,6 +139,11 @@ namespace CiarenceUnbelievableModifications
                 "TripmineBeamColour",
                 Color.red,
                 "The colour of the tripmine's light beam");
+
+            configTripmineBeamTriggeredColour = Config.Bind("Tripmine",
+                "TripmineBeamTriggeredColour",
+                Color.cyan,
+                "The colour of the tripmine's light beam when triggered");
 
             //Flashlight disco config
             configDiscoFlashlight = Config.Bind("Fun stuff",
@@ -341,7 +347,12 @@ namespace CiarenceUnbelievableModifications
 
             configTripmineBeamColour.SettingChanged += (object sender, EventArgs args) =>
             {
-                RobotTweaks.tripmine_beam_colour = configTripmineBeamColour.Value;
+                if (CanChangeKillDroneLights()) RobotTweaks.tripmine_beam_colour = configTripmineBeamColour.Value;
+            };
+
+            configTripmineBeamTriggeredColour.SettingChanged += (object sender, EventArgs args) =>
+            {
+                if (CanChangeKillDroneLights()) RobotTweaks.tripmine_beam_colour_triggered = configTripmineBeamTriggeredColour.Value;
             };
 
             configEnableTurretDiscoLights.SettingChanged += (object sender, EventArgs args) =>
@@ -376,49 +387,67 @@ namespace CiarenceUnbelievableModifications
 
             configDroneColourIdle.SettingChanged += (object sender, EventArgs args) =>
             {
-                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_idle_drone = configDroneColourIdle.Value;
+                if (CanChangeKillDroneLights()) RobotTweaks.colour_idle_drone = configDroneColourIdle.Value;
             };
             configDroneColourAlert.SettingChanged += (object sender, EventArgs args) =>
             {
-                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_alert_drone = configDroneColourAlert.Value;
+                if (CanChangeKillDroneLights()) RobotTweaks.colour_alert_drone = configDroneColourAlert.Value;
             };
             configDroneColourAttacking.SettingChanged += (object sender, EventArgs args) =>
             {
-                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_attacking_drone = configDroneColourAttacking.Value;
+                if (CanChangeKillDroneLights()) RobotTweaks.colour_attacking_drone = configDroneColourAttacking.Value;
             };
 
 
             configCameraColourIdle.SettingChanged += (object sender, EventArgs args) =>
             {
-                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_idle_camera = configCameraColourIdle.Value;
+                if (CanChangeKillDroneLights()) RobotTweaks.colour_idle_camera = configCameraColourIdle.Value;
             };
             configCameraColourAlert.SettingChanged += (object sender, EventArgs args) =>
             {
-                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_alert_camera = configCameraColourAlert.Value;
+                if (CanChangeKillDroneLights()) RobotTweaks.colour_alert_camera = configCameraColourAlert.Value;
             };
             configCameraColourAlarming.SettingChanged += (object sender, EventArgs args) =>
             {
-                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_alarming_camera = configCameraColourAlarming.Value;
+                if (CanChangeKillDroneLights()) RobotTweaks.colour_alarming_camera = configCameraColourAlarming.Value;
             };
 
 
             configTurretColourNormal.SettingChanged += (object sender, EventArgs args) =>
             {
-                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_normal = configTurretColourNormal.Value;
+                if (CanChangeKillDroneLights()) RobotTweaks.colour_normal = configTurretColourNormal.Value;
             };
             configTurretColourAlert.SettingChanged += (object sender, EventArgs args) =>
             {
-                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_alert = configTurretColourAlert.Value;
+                if (CanChangeKillDroneLights()) RobotTweaks.colour_alert = configTurretColourAlert.Value;
             };
             configTurretColourAlertShooting.SettingChanged += (object sender, EventArgs args) =>
             {
-                if (!configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override)) RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
+                if (CanChangeKillDroneLights()) RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
             };
+
+            //Fog custom colours
+            PostProcessTweaks.east_other_colour = configFogColourOtherEast.Value;
+            PostProcessTweaks.west_other_colour = configFogColourOtherWest.Value;
+            PostProcessTweaks.east_beginner_colour = configFogColourBeginnerEast.Value;
+            PostProcessTweaks.west_beginner_colour = configFogColourBeginnerWest.Value;
+            PostProcessTweaks.east_sleeper_colour = configFogColourSleeperEast.Value;
+            PostProcessTweaks.west_sleeper_colour = configFogColourSleeperWest.Value;
+            PostProcessTweaks.east_sleepwalker_colour = configFogColourSleepwalkerEast.Value;
+            PostProcessTweaks.west_sleepwalker_colour = configFogColourSleepwalkerWest.Value;
+            PostProcessTweaks.east_fire_colour = configFogColourFireEast.Value;
+            PostProcessTweaks.west_fire_colour = configFogColourFireWest.Value;
+            PostProcessTweaks.east_awake_colour = configFogColourAwakeEast.Value;
+            PostProcessTweaks.west_awake_colour = configFogColourAwakeWest.Value;
 
             FlashlightTweaks.flashlight_color = configFlashlightColour.Value;
             FlashlightTweaks.UpdateFlashlightColours();
 
             RobotTweaks.tripmine_beam_colour = configTripmineBeamColour.Value;
+            RobotTweaks.tripmine_beam_colour_triggered = configTripmineBeamTriggeredColour.Value;
+
+            RobotTweaks.tripmine_beam_colour_normal = configTripmineBeamColour.Value;
+            RobotTweaks.tripmine_beam_colour_triggered_normal = configTripmineBeamTriggeredColour.Value;
 
             RobotTweaks.colour_idle_drone = configDroneColourIdle.Value;
             RobotTweaks.colour_alert_drone = configDroneColourAlert.Value;
@@ -459,6 +488,11 @@ namespace CiarenceUnbelievableModifications
         private void OnInitialize(ReceiverEventTypeVoid ev)
         {
             if (configDropGunEverywhere.Value) DropGunEverywhere.Enable();
+        }
+
+        private bool CanChangeKillDroneLights()
+        {
+            return !configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override);
         }
 
         private void Update()

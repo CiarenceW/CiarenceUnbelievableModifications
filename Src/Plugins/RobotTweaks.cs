@@ -15,6 +15,10 @@ namespace CiarenceUnbelievableModifications
     public static class RobotTweaks
     {
         public static Color tripmine_beam_colour;
+        public static Color tripmine_beam_colour_triggered;
+
+        public static Color tripmine_beam_colour_normal;
+        public static Color tripmine_beam_colour_triggered_normal;
 
         public static Color colour_normal;
         public static Color colour_alert;
@@ -31,6 +35,9 @@ namespace CiarenceUnbelievableModifications
         public static Color colour_idle_camera;
         public static Color colour_alert_camera;
         public static Color colour_alarming_camera;
+
+        public static Color tc_tripmine_beam_colour = Color.blue;
+        public static Color tc_tripmine_beam_colour_triggered = Color.red;
 
         public readonly static Color tc_colour_idle = Color.red;
         public readonly static Color tc_colour_alert = Color.white;
@@ -120,28 +127,53 @@ namespace CiarenceUnbelievableModifications
                 if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
                 {
                     codeMatcher
+                        //label if tripmine is not triggered
+                        .CreateLabelAt(0, out Label not_triggered_label)
+
+                        //sets the tripmine colour to its idle colour
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(TripMineBot), "light_beam")))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(RobotTweaks), "tripmine_beam_colour")))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(VolumetricLightBeam), "color")))
+
+                        //is the tripmine triggered? if not, skip next block
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(TripMineBot), "triggered")))
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Brfalse_S, not_triggered_label))
+
+                        //if tripmine is triggered, sets colour to triggered colour
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(TripMineBot), "light_beam")))
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(RobotTweaks), "tripmine_beam_colour_triggered")))
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Stfld, AccessTools.Field(typeof(VolumetricLightBeam), "color")))
+
+                        .Advance(2) //Advancing twice to place this after the first instruction, needed for the label for the laser to update.
+
+                        //Volumetric Light Beam needs to have this method called to update the colour. the base method for the tripmine actually calls it, but only if the tripmine is triggered and not incapacitated
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(TripMineBot), "light_beam")))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(VolumetricLightBeam), nameof(VolumetricLightBeam.UpdateAfterManualPropertyChange))));
+
                 }
                 return codeMatcher.InstructionEnumeration();
             }
         }
 
-        [HarmonyPatch(typeof(LightPart), "Update")]
+        [HarmonyPatch(typeof(LightPart), "UpdateLightMode")]
         [HarmonyPostfix]
         //can you tell from this that I'm going insane?
         private static void PatchLightPartUpdate(ref LightPart __instance)
         {
             //let's assume, for the sake of the arguement that, hypothetically, the object that the LightPart is attached to is a Shock Drone.
             var light_color = typeof(LightPart).GetField("light_color", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            //for the green demon
+            if (__instance.is_overridden) return;
+
             var shockDroneScript = __instance.transform.parent.parent.GetComponent<ShockDrone>();
             if (shockDroneScript != null)
             {
+
                 var state = (ShockDroneState)typeof(ShockDrone).GetField("state", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(shockDroneScript);
 
                 switch (state)
@@ -216,6 +248,10 @@ namespace CiarenceUnbelievableModifications
                 colour_normal = colour_idle_turret;
                 colour_alert = colour_alert_turret;
                 colour_alert_shooting = colour_attacking_turret;
+                tripmine_beam_colour = tripmine_beam_colour_normal;
+                if (verbose) Debug.LogFormat("{0} <- {1}", tripmine_beam_colour, tripmine_beam_colour_normal);
+                tripmine_beam_colour_triggered = tripmine_beam_colour_triggered_normal;
+                if (verbose) Debug.LogFormat("{0} <- {1}", tripmine_beam_colour_triggered, tripmine_beam_colour_triggered_normal);
                 return;
             }
             campaign_has_override = true;
@@ -225,6 +261,8 @@ namespace CiarenceUnbelievableModifications
             colour_normal = colour_override_idle;
             colour_alert = colour_override_alert;
             colour_alert_shooting = colour_override_attack;
+            tripmine_beam_colour = tc_tripmine_beam_colour;
+            tripmine_beam_colour_triggered = tc_tripmine_beam_colour_triggered;
             if (verbose) Debug.Log("player is bozo");
         }
 
