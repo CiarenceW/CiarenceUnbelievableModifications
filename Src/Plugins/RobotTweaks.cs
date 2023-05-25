@@ -128,7 +128,7 @@ namespace CiarenceUnbelievableModifications
                 {
                     codeMatcher
                         //label if tripmine is not triggered
-                        .CreateLabelAt(0, out Label not_triggered_label)
+                        //.CreateLabelAt(0, out Label not_triggered_label)
 
                         //sets the tripmine colour to its idle colour
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
@@ -139,7 +139,7 @@ namespace CiarenceUnbelievableModifications
                         //is the tripmine triggered? if not, skip next block
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(TripMineBot), "triggered")))
-                        .InsertAndAdvance(new CodeInstruction(OpCodes.Brfalse_S, not_triggered_label))
+                        .InsertBranchAndAdvance(OpCodes.Brfalse_S, codeMatcher.Pos)
 
                         //if tripmine is triggered, sets colour to triggered colour
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
@@ -159,6 +159,7 @@ namespace CiarenceUnbelievableModifications
             }
         }
 
+        //todo: maybe replace this by a transpiler, would probably be very boring and snore-inducing
         [HarmonyPatch(typeof(LightPart), "UpdateLightMode")]
         [HarmonyPostfix]
         //can you tell from this that I'm going insane?
