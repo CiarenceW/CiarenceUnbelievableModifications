@@ -35,6 +35,7 @@ namespace CiarenceUnbelievableModifications
         private ConfigEntry<Color> configFlashlightColour;
         private ConfigEntry<KeyCode> configFlashlightToggleKey;
         private ConfigEntry<bool> configDropGunEverywhere;
+        private ConfigEntry<float> configTimeToDropGun;
         private ConfigEntry<bool> configEnableTurretDiscoLights;
         private ConfigEntry<Color> configTurretColourNormal;
         private ConfigEntry<Color> configTurretColourAlert;
@@ -168,6 +169,12 @@ namespace CiarenceUnbelievableModifications
                 "DropGunEverywhere",
                 true,
                 "Enable dropping the currently held gun in any scene");
+
+            //Time to drop gun config
+            configTimeToDropGun = Config.Bind("DropGunEverywhere",
+                "TimeToDropGun",
+                0.5f,
+                new ConfigDescription("The amount of time you have to hold \"E\" to drop the gun that is currently in your hands", new AcceptableValueRange<float>(0f, 1f)));
 
             //Explobing burret config
             configTurretAmmoBoxBoom = Config.Bind("General",
@@ -345,6 +352,11 @@ namespace CiarenceUnbelievableModifications
                 PostProcessTweaks.UpdateFogColour();
             };
 
+            configTimeToDropGun.SettingChanged += (object sender, EventArgs args) =>
+            {
+                DropGunEverywhere.time_to_drop = configTimeToDropGun.Value;
+            };
+
             configTripmineBeamColour.SettingChanged += (object sender, EventArgs args) =>
             {
                 if (CanChangeKillDroneLights()) RobotTweaks.tripmine_beam_colour = configTripmineBeamColour.Value;
@@ -440,6 +452,8 @@ namespace CiarenceUnbelievableModifications
             PostProcessTweaks.east_awake_colour = configFogColourAwakeEast.Value;
             PostProcessTweaks.west_awake_colour = configFogColourAwakeWest.Value;
 
+            DropGunEverywhere.time_to_drop = configTimeToDropGun.Value;
+
             FlashlightTweaks.flashlight_color = configFlashlightColour.Value;
             FlashlightTweaks.UpdateFlashlightColours();
 
@@ -475,6 +489,7 @@ namespace CiarenceUnbelievableModifications
             if (configGunTweaks.Value) Harmony.CreateAndPatchAll(typeof(GunTweaks));
             if (configRobotTweaks.Value) Harmony.CreateAndPatchAll(typeof(RobotTweaks));
             if (configVictorianFix.Value) Harmony.CreateAndPatchAll(typeof(VictorianFix));
+            Harmony.CreateAndPatchAll(typeof(DropGunEverywhere.DropButtonTimeOffsetTranspiler));
             Harmony.CreateAndPatchAll(typeof(RobotTweaks.TurretLightUpdateTranspiler));
             Harmony.CreateAndPatchAll(typeof(RobotTweaks.TripmineUpdateTranspiler));
 
