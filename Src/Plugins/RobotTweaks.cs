@@ -127,7 +127,6 @@ namespace CiarenceUnbelievableModifications
                 if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
                 {
                     codeMatcher
-                        //label if tripmine is not triggered
                         //.CreateLabelAt(0, out Label not_triggered_label)
 
                         //sets the tripmine colour to its idle colour
@@ -139,6 +138,7 @@ namespace CiarenceUnbelievableModifications
                         //is the tripmine triggered? if not, skip next block
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(TripMineBot), "triggered")))
+                        //label if tripmine is not triggered
                         .InsertBranchAndAdvance(OpCodes.Brfalse_S, codeMatcher.Pos)
 
                         //if tripmine is triggered, sets colour to triggered colour
