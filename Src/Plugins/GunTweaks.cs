@@ -42,5 +42,19 @@ namespace CiarenceUnbelievableModifications
                 }
             }
         }
+
+        [HarmonyPatch(typeof(RuntimeTileLevelGenerator),
+            nameof(RuntimeTileLevelGenerator.instance.InstantiateMagazine),
+            new[] { typeof(Vector3), typeof(Quaternion), typeof(Transform), typeof(MagazineClass) }
+            )]
+        [HarmonyPostfix]
+        private static GameObject InstantiateMagazine(ref GameObject __result, Vector3 position, Quaternion rotation, Transform parent, MagazineClass magazine_class)
+        {
+            var RCS = ReceiverCoreScript.Instance();
+            MagazineScript magazinePrefab;
+            RCS.player.lah.TryGetGun(out GunScript gun);
+            RCS.TryGetMagazinePrefabFromRoot(gun.magazine_root_types[UnityEngine.Random.Range(0, gun.magazine_root_types.Length - 1)], magazine_class, out magazinePrefab);
+            return __result = RuntimeTileLevelGenerator.instance.InstantiateMagazine(position, rotation, parent, magazinePrefab);
+        }
     }
 }
