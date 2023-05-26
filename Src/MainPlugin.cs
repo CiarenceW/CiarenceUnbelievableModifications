@@ -32,10 +32,12 @@ namespace CiarenceUnbelievableModifications
         private ConfigEntry<Color> configTripmineBeamTriggeredColour;
         private ConfigEntry<bool> configFlashlightTweaks;
         private ConfigEntry<bool> configDiscoFlashlight;
+        private ConfigEntry<float> configTimeToDropFlashlight;
         private ConfigEntry<Color> configFlashlightColour;
         private ConfigEntry<KeyCode> configFlashlightToggleKey;
         private ConfigEntry<bool> configDropGunEverywhere;
         private ConfigEntry<float> configTimeToDropGun;
+        private ConfigEntry<KeyCode> configForceXrayKey;
         private ConfigEntry<bool> configEnableTurretDiscoLights;
         private ConfigEntry<Color> configTurretColourNormal;
         private ConfigEntry<Color> configTurretColourAlert;
@@ -163,6 +165,11 @@ namespace CiarenceUnbelievableModifications
                 "FlashlightToggleKey",
                 KeyCode.X,
                 "The key that toggles the flashlight while held");
+
+            configTimeToDropFlashlight = Config.Bind("Flashlight",
+                "TimeToDropFlashlight",
+                0.5f,
+                new ConfigDescription("the amount of time you have to hold \"E\" to drop the gun that is currently in your hands", new AcceptableValueRange<float>(0f, 1f)));
 
             //DropGunEverywhere config
             configDropGunEverywhere = Config.Bind("General",
@@ -357,6 +364,11 @@ namespace CiarenceUnbelievableModifications
                 DropGunEverywhere.time_to_drop = configTimeToDropGun.Value;
             };
 
+            configTimeToDropFlashlight.SettingChanged += (object sender, EventArgs args) =>
+            {
+                FlashlightTweaks.time_to_drop = configTimeToDropFlashlight.Value;
+            };
+
             configTripmineBeamColour.SettingChanged += (object sender, EventArgs args) =>
             {
                 if (CanChangeKillDroneLights()) RobotTweaks.tripmine_beam_colour = configTripmineBeamColour.Value;
@@ -454,6 +466,8 @@ namespace CiarenceUnbelievableModifications
 
             DropGunEverywhere.time_to_drop = configTimeToDropGun.Value;
 
+            FlashlightTweaks.time_to_drop = configTimeToDropFlashlight.Value;
+
             FlashlightTweaks.flashlight_color = configFlashlightColour.Value;
             FlashlightTweaks.UpdateFlashlightColours();
 
@@ -498,6 +512,7 @@ namespace CiarenceUnbelievableModifications
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(RobotTweaks.OnPlayerInitialize));
 
             Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchBombBotPrefab));
+            Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(GunTweaks.PatchDeaglesSpring));
         }
 
         private void OnInitialize(ReceiverEventTypeVoid ev)

@@ -13,13 +13,9 @@ namespace CiarenceUnbelievableModifications
 {
     public static class GunTweaks
     {
-        //only fixes the main_spring on the deagles for now.
-
-        [HarmonyPatch(typeof(ReceiverCoreScript), "Awake")]
-        [HarmonyPostfix]
-        private static void PatchCoreAwake(ref ReceiverCoreScript __instance)
+        public static void PatchDeaglesSpring()
         {
-            var deagles = (from e in __instance.gun_prefabs where e.GetComponent<GunScript>().weapon_group_name == "desert_eagle" select e);
+            var deagles = (from e in ReceiverCoreScript.Instance().gun_prefabs where e.GetComponent<GunScript>().weapon_group_name == "desert_eagle" select e);
             foreach (GameObject deagle in deagles)
             {
                 //reflection-fest
