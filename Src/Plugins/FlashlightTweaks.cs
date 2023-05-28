@@ -20,6 +20,8 @@ namespace CiarenceUnbelievableModifications
         private static VLB.VolumetricLightBeam vlb;
         public static bool verbose;
 
+        public static float time_to_drop;
+
         public static Color flashlight_color;
 
         private static float colour_a = 0f;
@@ -52,7 +54,7 @@ namespace CiarenceUnbelievableModifications
                     vlb.color = new Color(vlb.color.r, vlb.color.g, vlb.color.b, 1 * (battery_life_remaining / max_battery_life));
                     if (!lah.IsHoldingGun)
                     {
-                        if (lah.character_input.GetButtonDown(RewiredConsts.Action.Eject_Drop_Magazine)) drop_button_released_time = Time.time + 0.5f;
+                        if (lah.character_input.GetButtonDown(RewiredConsts.Action.Eject_Drop_Magazine)) drop_button_released_time = Time.time + time_to_drop;
 
                         if (lah.character_input.GetButtonUp(RewiredConsts.Action.Eject_Drop_Magazine)) drop_button_released_time = float.MaxValue;
 
