@@ -43,7 +43,7 @@ namespace CiarenceUnbelievableModifications
             }
         }
 
-        [HarmonyPatch(typeof(RuntimeTileLevelGenerator),
+        /*[HarmonyPatch(typeof(RuntimeTileLevelGenerator),
             nameof(RuntimeTileLevelGenerator.instance.InstantiateMagazine),
             new[] { typeof(Vector3), typeof(Quaternion), typeof(Transform), typeof(MagazineClass) }
             )]
@@ -55,6 +55,6 @@ namespace CiarenceUnbelievableModifications
             RCS.player.lah.TryGetGun(out GunScript gun);
             RCS.TryGetMagazinePrefabFromRoot(gun.magazine_root_types[UnityEngine.Random.Range(0, gun.magazine_root_types.Length - 1)], magazine_class, out magazinePrefab);
             return __result = RuntimeTileLevelGenerator.instance.InstantiateMagazine(position, rotation, parent, magazinePrefab);
-        }
+        }*/
     }
 }
