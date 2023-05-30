@@ -500,7 +500,11 @@ namespace CiarenceUnbelievableModifications
 
             if (configDropGunEverywhere.Value) DropGunEverywhere.Enable();
 
-            if (configGunTweaks.Value) Harmony.CreateAndPatchAll(typeof(GunTweaks));
+            if (configGunTweaks.Value)
+            {
+                Harmony.CreateAndPatchAll(typeof(GunTweaks));
+                Harmony.CreateAndPatchAll(typeof(GunTweaks.InstantiateMagazineTranspiler));
+            }
             if (configRobotTweaks.Value) Harmony.CreateAndPatchAll(typeof(RobotTweaks));
             if (configVictorianFix.Value) Harmony.CreateAndPatchAll(typeof(VictorianFix));
             Harmony.CreateAndPatchAll(typeof(DropGunEverywhere.DropButtonTimeOffsetTranspiler));
