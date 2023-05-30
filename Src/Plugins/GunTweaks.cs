@@ -70,6 +70,7 @@ namespace CiarenceUnbelievableModifications
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloca_S, gun))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(LocalAimHandler), nameof(LocalAimHandler.TryGetGun))))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Pop))
+
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_0))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_2))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(GunScript), nameof(GunScript.magazine_root_types))))
@@ -79,7 +80,6 @@ namespace CiarenceUnbelievableModifications
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldlen))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Conv_I4))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_I4_1))
-                        .InsertAndAdvance(new CodeInstruction(OpCodes.Sub))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(UnityEngine.Random), nameof(UnityEngine.Random.Range), new[] {typeof(Int32), typeof(Int32)})))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldelem_Ref))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_3))
@@ -101,15 +101,6 @@ namespace CiarenceUnbelievableModifications
 
                 return codeMatcher.InstructionEnumeration();
             }
-        }
-
-        private static GameObject InstantiateMagazine(Vector3 position, Quaternion rotation, Transform parent, MagazineClass magazine_class)
-        {
-            var RCS = ReceiverCoreScript.Instance();
-            MagazineScript magazinePrefab;
-            RCS.player.lah.TryGetGun(out GunScript gun);
-            RCS.TryGetMagazinePrefabFromRoot(gun.magazine_root_types[UnityEngine.Random.Range(0, gun.magazine_root_types.Length - 1)], magazine_class, out magazinePrefab);
-            return RuntimeTileLevelGenerator.instance.InstantiateMagazine(position, rotation, parent, magazinePrefab);
         }
     }
 }

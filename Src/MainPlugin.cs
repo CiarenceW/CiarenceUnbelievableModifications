@@ -529,8 +529,21 @@ namespace CiarenceUnbelievableModifications
             return !configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override);
         }
 
+        public static GameObject InstantiateMagazine(Vector3 position, Quaternion rotation, Transform parent, MagazineClass magazine_class)
+        {
+            var RCS = ReceiverCoreScript.Instance();
+            RCS.player.lah.TryGetGun(out GunScript gun);
+            RCS.TryGetMagazinePrefabFromRoot(gun.magazine_root_types[UnityEngine.Random.Range(0, gun.magazine_root_types.Length)], magazine_class, out MagazineScript magazinePrefab);
+            return RuntimeTileLevelGenerator.instance.InstantiateMagazine(position, rotation, parent, magazinePrefab);
+        }
+
         private void Update()
         {
+            if (Input.GetKeyDown(KeyCode.G))
+            {
+                Debug.Log("FUIESFO");
+                //UnityEngine.Object.Instantiate<GameObject>(GunTweaks.InstantiateMagazine(ReceiverCoreScript.Instance().player.lah.transform.position, Quaternion.identity, ReceiverCoreScript.Instance().player.lah.transform.parent, MagazineClass.StandardCapacity), new Vector3(ReceiverCoreScript.Instance().player.lah.transform.position.x, ReceiverCoreScript.Instance().player.lah.transform.position.y + 2, ReceiverCoreScript.Instance().player.lah.transform.position.z), Quaternion.identity, ReceiverCoreScript.Instance().player.lah.transform.parent);
+            }
             if (configDiscoFlashlight.Value) FlashlightTweaks.Discolights();
             if (configEnableTurretDiscoLights.Value) RobotTweaks.Discolights();
             if (configFlashlightTweaks.Value) FlashlightTweaks.UpdateFlashlight(configFlashlightToggleKey.Value);
