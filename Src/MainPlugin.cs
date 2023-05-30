@@ -529,7 +529,7 @@ namespace CiarenceUnbelievableModifications
             return !configKilldroneColourOverride.Value || (configKilldroneColourOverride.Value && !RobotTweaks.campaign_has_override);
         }
 
-        public static GameObject InstantiateMagazine(Vector3 position, Quaternion rotation, Transform parent, MagazineClass magazine_class)
+        public GameObject InstantiateMagazine(Vector3 position, Quaternion rotation, Transform parent, MagazineClass magazine_class)
         {
             var RCS = ReceiverCoreScript.Instance();
             RCS.player.lah.TryGetGun(out GunScript gun);

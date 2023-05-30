@@ -56,6 +56,7 @@ namespace CiarenceUnbelievableModifications
 
                 LocalBuilder gun = generator.DeclareLocal(typeof(GunScript));
                 LocalBuilder magazinePrefab = generator.DeclareLocal(typeof(MagazineScript));
+                LocalBuilder magazineClass = generator.DeclareLocal(typeof(MagazineClass));
 
                 if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
                 {
@@ -82,7 +83,7 @@ namespace CiarenceUnbelievableModifications
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_I4_1))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(UnityEngine.Random), nameof(UnityEngine.Random.Range), new[] {typeof(Int32), typeof(Int32)})))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldelem_Ref))
-                        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_3))
+                        .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_S, magazineClass))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloca_S, magazinePrefab))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(ReceiverCoreScript), nameof(ReceiverCoreScript.TryGetMagazinePrefabFromRoot))))
                         .InsertAndAdvance(new CodeInstruction(OpCodes.Pop))
