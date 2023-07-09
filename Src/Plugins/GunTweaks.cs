@@ -1,17 +1,10 @@
-﻿using BepInEx;
-using HarmonyLib;
-using Receiver2;
+﻿using Receiver2;
 using UnityEngine;
-using System.Reflection;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CiarenceUnbelievableModifications
 {
-    public static class GunTweaks
+    internal static class GunTweaks
     {
         public static void PatchDeaglesSpring()
         {
@@ -39,6 +32,19 @@ namespace CiarenceUnbelievableModifications
                 else
                 {
                     Debug.LogError("fucking deagle is null, can you believe it? fucking fuck.");
+                }
+            }
+        }
+
+        public static void PatchHiPointCatchMagSlideAmount() //that's a mouthful
+        {
+            var hipoints = (from e in ReceiverCoreScript.Instance().gun_prefabs where e.GetComponent<GunScript>().gun_model == GunModel.HiPoint select e.GetComponent<GunScript>());
+            foreach (GunScript hipoint in hipoints)
+            {
+                if (hipoint != null)
+                {
+                    hipoint.magazine_catch_mag_slide_animation = "";
+                    hipoint.magazine_catch_mag_slide_amount = 0.8025f; //I like this number
                 }
             }
         }
