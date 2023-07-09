@@ -1,18 +1,11 @@
 ﻿using Receiver2;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
-using Wolfire;
-using BepInEx;
 
 namespace CiarenceUnbelievableModifications
 {
-    public static class TurretAmmoBoxBoom
+    internal static class TurretAmmoBoxBoom
     {
         public static bool verbose;
         public static void Enable()

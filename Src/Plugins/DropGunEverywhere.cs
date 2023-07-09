@@ -1,15 +1,13 @@
 ﻿using Receiver2;
-using UnityEngine.Events;
 using System.Reflection;
 using UnityEngine;
-using BepInEx;
 using HarmonyLib;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 
 namespace CiarenceUnbelievableModifications
 {
-    public static class DropGunEverywhere
+    internal static class DropGunEverywhere
     {
         private static LocalAimHandler lah;
         public static float time_to_drop = 1f;

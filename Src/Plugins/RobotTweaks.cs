@@ -1,18 +1,14 @@
-using BepInEx;
 using HarmonyLib;
 using Receiver2;
 using UnityEngine;
 using System.Reflection;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Reflection.Emit;
 using VLB;
 
 namespace CiarenceUnbelievableModifications
 {
-    public static class RobotTweaks
+    internal static class RobotTweaks
     {
         public static Color tripmine_beam_colour;
         public static Color tripmine_beam_colour_triggered;

@@ -1,17 +1,10 @@
-﻿using BepInEx;
-using Receiver2;
+﻿using Receiver2;
 using System.Reflection;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace CiarenceUnbelievableModifications
 {
-    public static class FlashlightTweaks
+    internal static class FlashlightTweaks
     {
         private static LocalAimHandler lah;
         private static float drop_button_released_time;

@@ -4,7 +4,7 @@
     <TargetFramework>net46</TargetFramework>
     <AssemblyName>CiarenceUnbelievableModifications</AssemblyName>
     <Description>A collection of fixes + fun and QoL changes for Receiver 2</Description>
-    <Version>1.4.0</Version>
+    <Version>1.7.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
@@ -13,6 +13,7 @@
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="UnityEngine.Modules" Version="2019.4.29" IncludeAssets="compile" />
   </ItemGroup>
   
