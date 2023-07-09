@@ -49,6 +49,14 @@ namespace CiarenceUnbelievableModifications
             if (SettingsManager.configDropGunEverywhere.Value) DropGunEverywhere.Enable();
         }
 
+        public GameObject InstantiateMagazine(Vector3 position, Quaternion rotation, Transform parent, MagazineClass magazine_class)
+        {
+            var RCS = ReceiverCoreScript.Instance();
+            RCS.player.lah.TryGetGun(out GunScript gun);
+            RCS.TryGetMagazinePrefabFromRoot(gun.magazine_root_types[UnityEngine.Random.Range(0, gun.magazine_root_types.Length)], magazine_class, out MagazineScript magazinePrefab);
+            return RuntimeTileLevelGenerator.instance.InstantiateMagazine(position, rotation, parent, magazinePrefab);
+        }
+
         private void Update()
         {
             if (SettingsManager.configDiscoFlashlight.Value) FlashlightTweaks.Discolights();
