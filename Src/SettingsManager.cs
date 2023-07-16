@@ -15,7 +15,8 @@ namespace CiarenceUnbelievableModifications
 {
     internal static class SettingsManager
     {
-        internal static ConfigFile config = new ConfigFile(Path.Combine(Paths.ConfigPath, typeof(SettingsManager).Assembly.GetName().Name) + ".cfg", true);
+        //internal static ConfigFile config = new ConfigFile(Path.Combine(Paths.ConfigPath, typeof(SettingsManager).Assembly.GetName().Name) + ".cfg", true, (BepInPlugin)Attribute.GetCustomAttribute(typeof(MainPlugin), typeof(BepInPlugin)));
+        internal static ConfigFile config;
 
         const string debugCatName = "Debug";
         const string generalCatName = "General";
@@ -76,6 +77,7 @@ namespace CiarenceUnbelievableModifications
 
         internal static void InitializeAndBindSettings()
         {
+            config = MainPlugin.config;
 
             configVerboseDebugEnabled = config.Bind(debugCatName,
                 "VerboseEnabled",

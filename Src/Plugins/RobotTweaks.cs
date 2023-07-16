@@ -69,6 +69,13 @@ namespace CiarenceUnbelievableModifications
             //AccessTools.Field(typeof(LightPart), "light_color").SetValue(__instance.enemy_prefabs.shock_drone.GetComponent<ShockDrone>().light_part, new Color(1f, 0f, 1f, 1f));
         }
 
+        internal static void PatchPowerLeechPrefab()
+        {
+            var power_leech = ReceiverCoreScript.Instance().enemy_prefabs.power_leech_bot.GetComponent<PowerLeechBot>();
+
+            power_leech.occlusion_component = ReceiverCoreScript.Instance().enemy_prefabs.turret.GetComponent<TurretScript>().occlusion_component;
+        }
+
         //bear with me here but, wouldn't it be crazy if there were actual fucking tutorials for this sort of things?
         //like, AFAIK, people who use Harmony have all learned from looking at what other people have done
         //sure the ONE tutorial on the wiki helps a bit, but if you want to do something that isn't EXACTLY what the tutorial shows, you're fucked

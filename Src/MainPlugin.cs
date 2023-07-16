@@ -12,11 +12,14 @@ namespace CiarenceUnbelievableModifications
     public class MainPlugin : BaseUnityPlugin
     {
         //all this kinda sucks, like, I probably should've tried to uniform everything and stuff. But I started doing all that at 3am and can't currently be arsed to make it all better. So oops.
+        internal static ConfigFile config;
 
         private void Awake()
         {
             // Plugin startup logic
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+
+            config = Config;
 
             SettingsManager.InitializeAndBindSettings();
 
@@ -27,10 +30,12 @@ namespace CiarenceUnbelievableModifications
             if (SettingsManager.configGunTweaks.Value) Harmony.CreateAndPatchAll(typeof(GunTweaks));
             if (SettingsManager.configRobotTweaks.Value) Harmony.CreateAndPatchAll(typeof(RobotTweaks));
             if (SettingsManager.configVictorianFix.Value) Harmony.CreateAndPatchAll(typeof(rtlgTweaks));
+            Harmony.CreateAndPatchAll(typeof(PostProcessTweaks));
             Harmony.CreateAndPatchAll(typeof(lahTweaks));
             Harmony.CreateAndPatchAll(typeof(DropGunEverywhere.DropButtonTimeOffsetTranspiler));
             Harmony.CreateAndPatchAll(typeof(RobotTweaks.TurretLightUpdateTranspiler));
             Harmony.CreateAndPatchAll(typeof(RobotTweaks.TripmineUpdateTranspiler));
+            Harmony.CreateAndPatchAll(typeof(MenuManagerTweaks));
 
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(OnInitialize));
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(PostProcessTweaks.OnPlayerInitialize));
@@ -38,10 +43,10 @@ namespace CiarenceUnbelievableModifications
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(rtlgTweaks.OnInitialize));
 
             Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchBombBotPrefab));
+            Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchPowerLeechPrefab));
             Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(GunTweaks.PatchDeaglesSpring));
             Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(GunTweaks.PatchHiPointCatchMagSlideAmount));
             Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(PostProcessTweaks.AddSettingsToStandardProfile));
-
         }
 
         private void OnInitialize(ReceiverEventTypeVoid ev)

@@ -25,8 +25,14 @@
     <Reference Include="0Harmony">
       <HintPath>..\Binaries\0Harmony.dll</HintPath>
     </Reference>
+    <Reference Include="AmplifyOcclusion">
+      <HintPath>Libs\AmplifyOcclusion.dll</HintPath>
+    </Reference>
     <Reference Include="BepInEx">
       <HintPath>..\Binaries\BepInEx.dll</HintPath>
+    </Reference>
+    <Reference Include="ImGui">
+      <HintPath>Libs\ImGui.dll</HintPath>
     </Reference>
     <Reference Include="Receiver2ModdingKit">
       <HintPath>Libs\Receiver2ModdingKit.dll</HintPath>
