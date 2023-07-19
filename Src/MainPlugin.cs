@@ -29,8 +29,7 @@ namespace CiarenceUnbelievableModifications
 
             if (SettingsManager.configGunTweaks.Value) Harmony.CreateAndPatchAll(typeof(GunTweaks));
             if (SettingsManager.configRobotTweaks.Value) Harmony.CreateAndPatchAll(typeof(RobotTweaks));
-            if (SettingsManager.configVictorianFix.Value) Harmony.CreateAndPatchAll(typeof(rtlgTweaks));
-            Harmony.CreateAndPatchAll(typeof(PostProcessTweaks));
+            if (SettingsManager.configSpawnCompatibleMags.Value) Harmony.CreateAndPatchAll(typeof(rtlgTweaks));
             Harmony.CreateAndPatchAll(typeof(lahTweaks));
             Harmony.CreateAndPatchAll(typeof(DropGunEverywhere.DropButtonTimeOffsetTranspiler));
             Harmony.CreateAndPatchAll(typeof(RobotTweaks.TurretLightUpdateTranspiler));

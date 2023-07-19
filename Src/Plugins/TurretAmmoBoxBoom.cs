@@ -70,8 +70,9 @@ namespace CiarenceUnbelievableModifications
             {
                 Vector3 vector = LocalAimHandler.player_instance.RandomPointInCollider(1f) - shrapnel_source.transform.position;
                 Vector3 vector2;
-                if (i == 0 && (vector.magnitude < 10f || UnityEngine.Random.Range(0f, 1f) > 0.5f))
+                if (i == 0 && (vector.magnitude < 5f || Probability.Chance(0.05f))) //targets player if magnitude between ammo box and random point in player collider is less than 5, or if unlucky, lol
                 {
+                    if (verbose) Debug.Log("Targeting player");
                     vector2 = vector.normalized;
                 }
                 else

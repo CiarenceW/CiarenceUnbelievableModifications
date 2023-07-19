@@ -22,6 +22,10 @@ namespace CiarenceUnbelievableModifications
 
         internal static AmplifyOcclusionEffect aoEffect;
 
+        internal static MotionBlur motionBlur;
+
+        internal static ScreenSpaceReflections ssr;
+
         public static Color east_beginner_colour = new Color(0.5f, 0.2f, 1f);
         public static Color west_beginner_colour = new Color(0.5f, 1f, 0.2f);
 
@@ -42,27 +46,7 @@ namespace CiarenceUnbelievableModifications
 
         internal static void AddSettingsToStandardProfile()
         {
-            aoEffect = ReceiverCoreScript.Instance().player_prefab.GetComponent<PlayerScript>().main_camera_prefab.AddComponent<AmplifyOcclusionEffect>();
-            bool fantasticPresetActive = ConfigFiles.global.quality_level_preset == "Fantastic";
-            aoEffect.gameObject.SetActive(fantasticPresetActive);
-            aoEffect.ApplyMethod = AmplifyOcclusionBase.ApplicationMethod.Deferred;
-            aoEffect.BlurPasses = 3;
-            aoEffect.Downsample = false;
-            aoEffect.FilterDownsample = false;
-            aoEffect.PerPixelNormals = AmplifyOcclusionBase.PerPixelNormalSource.GBufferOctaEncoded;
-            aoEffect.Radius = 3f;
-            aoEffect.SampleCount = AmplifyOcclusion.SampleCountLevel.VeryHigh;
-            GlobalPostProcess.instance.standard.profile.GetSetting<AmbientOcclusion>().active = false;
             CreateSettingsMenuEntries();
-        }
-
-        [HarmonyPatch(typeof(SettingsMenuScript), nameof(SettingsMenuScript.QualityLevelOnChange))]
-        [HarmonyPostfix]
-        internal static void PatchQualityLevelOnChange()
-        {
-            bool fantasticPresetActive = ConfigFiles.global.quality_level_preset == "Fantastic";
-            aoEffect.gameObject.SetActive(fantasticPresetActive);
-            GlobalPostProcess.instance.standard.profile.GetSetting<AmbientOcclusion>().active = !fantasticPresetActive;
         }
 
         public static Color GetCurrentColourEast()
@@ -171,7 +155,7 @@ namespace CiarenceUnbelievableModifications
             ssrDropDown.label.SetActive(SettingsManager.configSSREnabled.Value);
 
             //do that here otherwise the fucking soften gun sounds thing get trued
-            var ssr = GlobalPostProcess.instance.default_standard_profile.AddSettings<ScreenSpaceReflections>();
+            if (!GlobalPostProcess.instance.default_standard_profile.HasSettings<ScreenSpaceReflections>()) ssr = GlobalPostProcess.instance.default_standard_profile.AddSettings<ScreenSpaceReflections>();
             ssr.active = SettingsManager.configSSREnabled.Value;
 
             ssr.distanceFade.value = 1f;
@@ -204,7 +188,7 @@ namespace CiarenceUnbelievableModifications
             motionBlurSlider.label.SetActive(SettingsManager.configMotionBlurEnabled.Value);
 
             //do that here otherwise master audio volume gets set
-            var motionBlur = GlobalPostProcess.instance.default_standard_profile.AddSettings<MotionBlur>();
+            if (!GlobalPostProcess.instance.default_standard_profile.HasSettings<MotionBlur>()) motionBlur = GlobalPostProcess.instance.default_standard_profile.AddSettings<MotionBlur>();
             motionBlur.active = SettingsManager.configMotionBlurEnabled.Value;
             motionBlur.sampleCount.value = 100;
             motionBlur.sampleCount.overrideState = true;

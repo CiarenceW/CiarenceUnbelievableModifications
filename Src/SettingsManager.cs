@@ -74,6 +74,7 @@ namespace CiarenceUnbelievableModifications
         internal static ConfigEntry<bool> configGunTweaks;
         internal static ConfigEntry<bool> configRobotTweaks;
         internal static ConfigEntry<bool> configVictorianFix;
+        internal static ConfigEntry<bool> configSpawnCompatibleMags;
 
         internal static void InitializeAndBindSettings()
         {
@@ -283,9 +284,9 @@ namespace CiarenceUnbelievableModifications
 
             //Victorian fix config
             configVictorianFix = config.Bind(generalCatName,
-                "VictorianFix",
+                "TileFix",
                 true,
-                "Enable the victorian top floor collider fix, requires restart");
+                "Enable the victorian top floor collider fix, and the Two Towers walkramp fix, requires restart");
 
             configMotionBlurEnabled = config.Bind("Graphics",
                 "Enable Motion Blur",
@@ -306,6 +307,11 @@ namespace CiarenceUnbelievableModifications
                 "SSR Quality",
                 "Medium",
                 new ConfigDescription("Quality of the Screen Space Reflections", new AcceptableValueList<string>("Lower", "Low", "Medium", "High", "Higher", "Ultra", "Overkill", "Receiver 2 Bespoke")));
+
+            configSpawnCompatibleMags = config.Bind(generalCatName,
+                "Spawn Compatible Mags",
+                true,
+                "Spawns every compatible mag for current gun in the Dreaming");
 
             configMotionBlurEnabled.SettingChanged += (object sender, EventArgs args) =>
             {

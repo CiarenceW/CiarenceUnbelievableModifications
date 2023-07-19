@@ -72,7 +72,7 @@ namespace CiarenceUnbelievableModifications
 
         internal static void OnInitialize(ReceiverEventTypeVoid ev)
         {
-            if (RuntimeTileLevelGenerator.instance != null)
+            if (RuntimeTileLevelGenerator.instance != null && !SettingsManager.configVictorianFix.Value)
             {
                 if (patched) return;
                 TwoTowersFix.ChangeTwoTowersWalkwayLayer();
