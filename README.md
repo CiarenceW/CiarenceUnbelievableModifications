@@ -2,6 +2,8 @@
 ### Collection of changes that were too small to release individually
 ## Features
 
+# **YOU NEED [THIS](https://github.com/Szikaka-97/Receiver2ModdingKit) FOR THIS TO WORK**
+
 ### TurretAmmoBoxBoom
 Want to add a degree of ~~annoyance~~ fun to your regular Receiver 2 gameplay?  
 Turrets' ammo boxes now **explode** if you shoot them! (and if they have any ammo left)
