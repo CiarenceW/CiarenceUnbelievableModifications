@@ -5,6 +5,7 @@ using UnityEngine;
 using HarmonyLib;
 using BepInEx.Configuration;
 using System;
+using Receiver2ModdingKit;
 
 namespace CiarenceUnbelievableModifications
 {
@@ -35,17 +36,30 @@ namespace CiarenceUnbelievableModifications
             Harmony.CreateAndPatchAll(typeof(RobotTweaks.TurretLightUpdateTranspiler));
             Harmony.CreateAndPatchAll(typeof(RobotTweaks.TripmineUpdateTranspiler));
             Harmony.CreateAndPatchAll(typeof(MenuManagerTweaks));
+            //Harmony.CreateAndPatchAll(typeof(Leaning));
 
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(OnInitialize));
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(PostProcessTweaks.OnPlayerInitialize));
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(RobotTweaks.OnPlayerInitialize));
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(rtlgTweaks.OnInitialize));
 
-            Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchBombBotPrefab));
-            Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchPowerLeechPrefab));
-            Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(GunTweaks.PatchDeaglesSpring));
-            Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(GunTweaks.PatchHiPointCatchMagSlideAmount));
-            Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(PostProcessTweaks.AddSettingsToStandardProfile));
+            AddTasksAtCoreStartup(
+                new ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchBombBotPrefab),
+                new ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchPowerLeechPrefab),
+                new ModdingKitCorePlugin.StartupAction(GunTweaks.PatchDeaglesSpring),
+                new ModdingKitCorePlugin.StartupAction(GunTweaks.PatchHiPointCatchMagSlideAmount),
+                new ModdingKitCorePlugin.StartupAction(PostProcessTweaks.AddSettingsToStandardProfile),
+                new ModdingKitCorePlugin.StartupAction(FPSLimiterTweaks.Initialize),
+                new ModdingKitCorePlugin.StartupAction(Leaning.Initialize)
+                );
+        }
+
+        private void AddTasksAtCoreStartup(params ModdingKitCorePlugin.StartupAction[] startupActions)
+        {
+            for ( int i = 0; i < startupActions.Length; i++)
+            {
+                ModdingKitCorePlugin.AddTaskAtCoreStartup(startupActions[i]);
+            }
         }
 
         private void OnInitialize(ReceiverEventTypeVoid ev)
@@ -59,6 +73,11 @@ namespace CiarenceUnbelievableModifications
             RCS.player.lah.TryGetGun(out GunScript gun);
             RCS.TryGetMagazinePrefabFromRoot(gun.magazine_root_types[UnityEngine.Random.Range(0, gun.magazine_root_types.Length)], magazine_class, out MagazineScript magazinePrefab);
             return RuntimeTileLevelGenerator.instance.InstantiateMagazine(position, rotation, parent, magazinePrefab);
+        }
+
+        private void OnApplicationFocus(bool focused)
+        {
+            FPSLimiterTweaks.ToggleFocusLostLimiter(focused);
         }
 
         private void Update()

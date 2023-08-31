@@ -76,6 +76,9 @@ namespace CiarenceUnbelievableModifications
         internal static ConfigEntry<bool> configVictorianFix;
         internal static ConfigEntry<bool> configSpawnCompatibleMags;
 
+        internal static ConfigEntry<bool> configLimitFPSFocusLostEnabled;
+        internal static ConfigEntry<float> configLimitFPSFocusLostCount;
+
         internal static void InitializeAndBindSettings()
         {
             config = MainPlugin.config;
@@ -312,6 +315,16 @@ namespace CiarenceUnbelievableModifications
                 "Spawn Compatible Mags",
                 true,
                 "Spawns every compatible mag for current gun in the Dreaming");
+
+            configLimitFPSFocusLostEnabled = config.Bind(generalCatName,
+                "Limit FPS on Focus Lost",
+                true,
+                "Enables the frame limiter when application is alt-tabbed");
+
+            configLimitFPSFocusLostCount = config.Bind(generalCatName,
+                "Focus lost FPS limit",
+                30f,
+                new ConfigDescription("What the FPS limit should be set at", new AcceptableValueRange<float>(15, 480)));
 
             configMotionBlurEnabled.SettingChanged += (object sender, EventArgs args) =>
             {

@@ -46,7 +46,9 @@ namespace CiarenceUnbelievableModifications
 
         internal static void AddSettingsToStandardProfile()
         {
-            CreateSettingsMenuEntries();
+            CreateSettingsMenuEntries(); 
+            //it didn't use to be like that but then there was a bug with events for custom settings menu buttons
+            //so I had to move all of it and stuff and now I'm just lazy
         }
 
         public static Color GetCurrentColourEast()
@@ -146,8 +148,7 @@ namespace CiarenceUnbelievableModifications
 
         private static void CreateSettingsMenuEntries()
         {
-            var ssrToggle = Receiver2ModdingKit.SettingsMenuManager.CreateSettingsMenuOption<bool>("Enable Screen Space Reflections", SettingsManager.configSSREnabled, 14).control.GetComponent(Type.GetType("Receiver2.ToggleComponent, Wolfire.Receiver2, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"));
-            UnityEvent<bool> ssrToggleEvent = (UnityEvent<bool>)ssrToggle.GetType().GetField("OnChange").GetValue(ssrToggle);
+            Receiver2ModdingKit.SettingsMenuManager.CreateSettingsMenuOption<bool>("Enable Screen Space Reflections", SettingsManager.configSSREnabled, 14).control.GetComponent(Type.GetType("Receiver2.ToggleComponent, Wolfire.Receiver2, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"));
             ssrDropDown = Receiver2ModdingKit.SettingsMenuManager.CreateSettingsMenuOption<string>("Screen Space Reflections Quality", SettingsManager.configSSRQuality, 15);
             var ssrDropDownComp = ssrDropDown.control.GetComponent<DropdownComponent>();
             ssrDropDownComp.OnChange.AddListener(value => ChangeSSRQualitySetting(ssrDropDownComp.SelectedIndex)); //I don't understand why this works and it makes me mad
