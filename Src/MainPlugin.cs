@@ -5,18 +5,24 @@ using UnityEngine;
 using HarmonyLib;
 using BepInEx.Configuration;
 using System;
+using Receiver2ModdingKit;
 
 namespace CiarenceUnbelievableModifications
 {
-    [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
+    [BepInPlugin("Ciarencew.CiarencesUnbelievableModifications", "CiarencesUnbelievableModifications", "1.7.0")]
     public class MainPlugin : BaseUnityPlugin
     {
         //all this kinda sucks, like, I probably should've tried to uniform everything and stuff. But I started doing all that at 3am and can't currently be arsed to make it all better. So oops.
+        internal static ConfigFile config;
+
+        internal const string InventoryGlintColourRandomizerHID = "IGCRHID";
 
         private void Awake()
         {
             // Plugin startup logic
-            Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+            Logger.LogInfo($"Plugin CiarencesUnbelievableModifications is loaded!");
+
+            config = Config;
 
             SettingsManager.InitializeAndBindSettings();
 
@@ -26,22 +32,40 @@ namespace CiarenceUnbelievableModifications
 
             if (SettingsManager.configGunTweaks.Value) Harmony.CreateAndPatchAll(typeof(GunTweaks));
             if (SettingsManager.configRobotTweaks.Value) Harmony.CreateAndPatchAll(typeof(RobotTweaks));
-            if (SettingsManager.configVictorianFix.Value) Harmony.CreateAndPatchAll(typeof(rtlgTweaks));
+            if (SettingsManager.configSpawnCompatibleMags.Value) Harmony.CreateAndPatchAll(typeof(rtlgTweaks));
             Harmony.CreateAndPatchAll(typeof(lahTweaks));
             Harmony.CreateAndPatchAll(typeof(DropGunEverywhere.DropButtonTimeOffsetTranspiler));
             Harmony.CreateAndPatchAll(typeof(RobotTweaks.TurretLightUpdateTranspiler));
             Harmony.CreateAndPatchAll(typeof(RobotTweaks.TripmineUpdateTranspiler));
+            Harmony.CreateAndPatchAll(typeof(MenuManagerTweaks));
+            Harmony.CreateAndPatchAll(typeof(TapeLocatron3000));
+            Harmony.CreateAndPatchAll(typeof(TurretAmmoBoxBoom));
+            if (SettingsManager.configInventoryGlintColourEnabled.Value == true) Harmony.CreateAndPatchAll(typeof(InventoryGlintColourRandomizer), InventoryGlintColourRandomizerHID);
+            //Harmony.CreateAndPatchAll(typeof(Leaning));
 
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(OnInitialize));
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(PostProcessTweaks.OnPlayerInitialize));
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(RobotTweaks.OnPlayerInitialize));
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(rtlgTweaks.OnInitialize));
 
-            Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchBombBotPrefab));
-            Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(GunTweaks.PatchDeaglesSpring));
-            Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(GunTweaks.PatchHiPointCatchMagSlideAmount));
-            Receiver2ModdingKit.ModdingKitCorePlugin.AddTaskAtCoreStartup(new Receiver2ModdingKit.ModdingKitCorePlugin.StartupAction(PostProcessTweaks.AddSettingsToStandardProfile));
+            AddTasksAtCoreStartup(
+                new ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchBombBotPrefab),
+                new ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchPowerLeechPrefab),
+                new ModdingKitCorePlugin.StartupAction(GunTweaks.PatchDeaglesSpring),
+                new ModdingKitCorePlugin.StartupAction(GunTweaks.PatchHiPointCatchMagSlideAmount),
+                new ModdingKitCorePlugin.StartupAction(PostProcessTweaks.AddSettingsToStandardProfile),
+                new ModdingKitCorePlugin.StartupAction(FPSLimiterTweaks.Initialize),
+                new ModdingKitCorePlugin.StartupAction(Leaning.Initialize),
+                new ModdingKitCorePlugin.StartupAction(RobotTweaks.SetUpLightPartFieldReflections)
+                );
+        }
 
+        private void AddTasksAtCoreStartup(params ModdingKitCorePlugin.StartupAction[] startupActions)
+        {
+            for ( int i = 0; i < startupActions.Length; i++)
+            {
+                ModdingKitCorePlugin.AddTaskAtCoreStartup(startupActions[i]);
+            }
         }
 
         private void OnInitialize(ReceiverEventTypeVoid ev)
@@ -55,6 +79,11 @@ namespace CiarenceUnbelievableModifications
             RCS.player.lah.TryGetGun(out GunScript gun);
             RCS.TryGetMagazinePrefabFromRoot(gun.magazine_root_types[UnityEngine.Random.Range(0, gun.magazine_root_types.Length)], magazine_class, out MagazineScript magazinePrefab);
             return RuntimeTileLevelGenerator.instance.InstantiateMagazine(position, rotation, parent, magazinePrefab);
+        }
+
+        private void OnApplicationFocus(bool focused)
+        {
+            FPSLimiterTweaks.ToggleFocusLostLimiter(focused);
         }
 
         private void Update()

@@ -1,0 +1,24 @@
+{
+    "name": "CiarenceUnbelievableModifications",
+    "references": [
+        "GUID:041edb9e43e1cd140a16ecbcf83eaffa"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Wolfire.Receiver2.dll",
+        "0Harmony.dll",
+        "BepInEx.dll",
+        "Unity.Postprocessing.Runtime.dll",
+        "ImGui.dll",
+        "SimpleJSON.dll",
+        "VolumetricLightBeam.Core.dll",
+        "Wolfire.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

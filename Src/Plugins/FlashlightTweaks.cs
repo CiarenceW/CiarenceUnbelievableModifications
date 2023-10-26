@@ -31,7 +31,7 @@ namespace CiarenceUnbelievableModifications
         {
             if (LocalAimHandler.TryGetInstance(out lah))
             {
-                if (lah.IsHoldingFlashlight)
+                if (lah.IsHoldingFlashlight && !lah.IsHoldingMagazine)
                 {
                     if (battery_life_remaining == float.MaxValue)
                     {

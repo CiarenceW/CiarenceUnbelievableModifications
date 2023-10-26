@@ -47,7 +47,7 @@ namespace CiarenceUnbelievableModifications
                     hipoint.magazine_catch_mag_slide_amount = 0.8025f; //I like this number
                 }
             }
-        }
+        } 
 
         /*[HarmonyPatch(typeof(RuntimeTileLevelGenerator),
             nameof(RuntimeTileLevelGenerator.instance.InstantiateMagazine),
@@ -107,6 +107,6 @@ namespace CiarenceUnbelievableModifications
 
                 return codeMatcher.InstructionEnumeration();
             }
-        }
+        }*/
     }
 }

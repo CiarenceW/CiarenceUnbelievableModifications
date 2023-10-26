@@ -2,6 +2,8 @@
 using System.Linq;
 using UnityEngine;
 using HarmonyLib;
+using System.Security.Cryptography;
+using UnityEngine.UIElements;
 
 namespace CiarenceUnbelievableModifications
 {
@@ -69,13 +71,28 @@ namespace CiarenceUnbelievableModifications
 
         internal static void OnInitialize(ReceiverEventTypeVoid ev)
         {
-            if (RuntimeTileLevelGenerator.instance != null)
+            if (RuntimeTileLevelGenerator.instance != null && SettingsManager.configVictorianFix.Value)
             {
                 if (patched) return;
                 TwoTowersFix.ChangeTwoTowersWalkwayLayer();
                 VictorianFix.ChangeVictorianTopFloorCollision();
                 patched = true;
             }
+        }
+
+        [HarmonyPatch(typeof(RuntimeTileLevelGenerator),
+            nameof(RuntimeTileLevelGenerator.instance.InstantiateMagazine),
+            new[] { typeof(Vector3), typeof(Quaternion), typeof(Transform), typeof(MagazineClass) }
+            )]
+        [HarmonyPrefix]
+        private static bool InstantiateMagazine(ref GameObject __result, ref Vector3 position, ref Quaternion rotation, ref Transform parent, ref MagazineClass magazine_class)
+        {
+            var RCS = ReceiverCoreScript.Instance();
+            MagazineScript magazinePrefab;
+            var gun = RCS.GetGunPrefab(RCS.CurrentLoadout.gun_internal_name);
+            RCS.TryGetMagazinePrefabFromRoot(gun.magazine_root_types[UnityEngine.Random.Range(0, gun.magazine_root_types.Length)], magazine_class, out magazinePrefab);
+            __result = RuntimeTileLevelGenerator.instance.InstantiateMagazine(position, rotation, parent, magazinePrefab);
+            return false;
         }
     }
 }

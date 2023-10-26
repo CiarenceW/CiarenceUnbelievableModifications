@@ -1,5 +1,6 @@
 ﻿using BepInEx.Configuration;
 using Receiver2;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,10 @@ namespace CiarenceUnbelievableModifications
         internal static Receiver2ModdingKit.SettingsMenuManager.SettingsMenuEntry<float> motionBlurSlider;
 
         internal static Receiver2ModdingKit.SettingsMenuManager.SettingsMenuEntry<string> ssrDropDown;
+
+        internal static MotionBlur motionBlur;
+
+        internal static ScreenSpaceReflections ssr;
 
         public static Color east_beginner_colour = new Color(0.5f, 0.2f, 1f);
         public static Color west_beginner_colour = new Color(0.5f, 1f, 0.2f);
@@ -39,7 +44,9 @@ namespace CiarenceUnbelievableModifications
 
         internal static void AddSettingsToStandardProfile()
         {
-            CreateSettingsMenuEntries();
+            CreateSettingsMenuEntries(); 
+            //it didn't use to be like that but then there was a bug with events for custom settings menu buttons
+            //so I had to move all of it and stuff and now I'm just lazy
         }
 
         public static Color GetCurrentColourEast()
@@ -89,7 +96,21 @@ namespace CiarenceUnbelievableModifications
 
         public static void OnPlayerInitialize(ReceiverEventTypeVoid ev)
         {
-            LocalAimHandler.TryGetInstance(out lah);
+            receiver_fog = null;
+
+            List<PostProcessVolume> volumes = new List<PostProcessVolume>();
+            PostProcessManager.instance.GetActiveVolumes(ReceiverCoreScript.Instance().player.lah.main_camera.GetComponent<PostProcessLayer>(), volumes);
+            var fog_volumes = (from e in volumes where e.profile.HasSettings<ReceiverFog>() select e.profile.GetSetting<ReceiverFog>());
+            if (fog_volumes.Count() > 0) receiver_fog = fog_volumes.Last();
+
+            if (receiver_fog != null)
+            {
+                receiver_fog.eastColor.overrideState = true;
+                receiver_fog.westColor.overrideState = true;
+            }
+
+            UpdateFogColour();
+            /*LocalAimHandler.TryGetInstance(out lah);
             if (ReceiverCoreScript.Instance().game_mode.GetGameMode() == GameMode.RankingCampaign)
             {
                 if (verbose) Debug.Log("receiver is receiving all over the place, guh damn");
@@ -112,8 +133,6 @@ namespace CiarenceUnbelievableModifications
                 List<PostProcessVolume> volumes = new List<PostProcessVolume>();
                 PostProcessManager.instance.GetActiveVolumes(lah.main_camera.GetComponent<PostProcessLayer>(), volumes, false, false);
                 receiver_fog = volumes.First( e => e.name == "receiver_fog_override").profile.GetSetting<ReceiverFog>();
-                receiver_fog.eastColor.overrideState = true;
-                receiver_fog.westColor.overrideState = true;
                 if (verbose) Debug.Log(receiver_fog.name);
             }
             if (receiver_fog != null)
@@ -122,14 +141,12 @@ namespace CiarenceUnbelievableModifications
                 if (verbose) Debug.Log(receiver_fog.eastColor.value);
                 if (verbose) Debug.Log(receiver_fog.westColor.value);
                 UpdateFogColour();
-            }
+            }*/
         }
 
         private static void CreateSettingsMenuEntries()
         {
-            var ssrToggle = Receiver2ModdingKit.SettingsMenuManager.CreateSettingsMenuOption<bool>("Enable Screen Space Reflections", SettingsManager.configSSREnabled, 14).control.GetComponent(Type.GetType("Receiver2.ToggleComponent, Wolfire.Receiver2, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"));
-            UnityEvent<bool> ssrToggleEvent = (UnityEvent<bool>)ssrToggle.GetType().GetField("OnChange").GetValue(ssrToggle);
-            ssrToggleEvent.m_Calls.m_ExecutingCalls.RemoveAt(0);
+            Receiver2ModdingKit.SettingsMenuManager.CreateSettingsMenuOption<bool>("Enable Screen Space Reflections", SettingsManager.configSSREnabled, 14).control.GetComponent(Type.GetType("Receiver2.ToggleComponent, Wolfire.Receiver2, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"));
             ssrDropDown = Receiver2ModdingKit.SettingsMenuManager.CreateSettingsMenuOption<string>("Screen Space Reflections Quality", SettingsManager.configSSRQuality, 15);
             var ssrDropDownComp = ssrDropDown.control.GetComponent<DropdownComponent>();
             ssrDropDownComp.OnChange.AddListener(value => ChangeSSRQualitySetting(ssrDropDownComp.SelectedIndex)); //I don't understand why this works and it makes me mad
@@ -137,7 +154,7 @@ namespace CiarenceUnbelievableModifications
             ssrDropDown.label.SetActive(SettingsManager.configSSREnabled.Value);
 
             //do that here otherwise the fucking soften gun sounds thing get trued
-            var ssr = GlobalPostProcess.instance.default_standard_profile.AddSettings<ScreenSpaceReflections>();
+            if (!GlobalPostProcess.instance.default_standard_profile.HasSettings<ScreenSpaceReflections>()) ssr = GlobalPostProcess.instance.default_standard_profile.AddSettings<ScreenSpaceReflections>();
             ssr.active = SettingsManager.configSSREnabled.Value;
 
             ssr.distanceFade.value = 1f;
@@ -163,18 +180,14 @@ namespace CiarenceUnbelievableModifications
 
             var motionBlurToggle = Receiver2ModdingKit.SettingsMenuManager.CreateSettingsMenuOption<bool>("Enable Motion Blur", SettingsManager.configMotionBlurEnabled, 17).control.GetComponent(Type.GetType("Receiver2.ToggleComponent, Wolfire.Receiver2, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"));
             UnityEvent<bool> motionBlurToggleEvent = (UnityEvent<bool>)motionBlurToggle.GetType().GetField("OnChange").GetValue(motionBlurToggle);
-            motionBlurToggleEvent.m_Calls.m_ExecutingCalls.RemoveAt(0);
             motionBlurSlider = Receiver2ModdingKit.SettingsMenuManager.CreateSettingsMenuOption<float>("Motion Blur Intensity", SettingsManager.configMotionBlurIntensity, 18);
             var motionBlurSliderComp = motionBlurSlider.control.GetComponent<SliderComponent>();
-            motionBlurSliderComp.OnChange.m_Calls.m_ExecutingCalls.Clear();
-            motionBlurSliderComp.OnChange.m_Calls.ClearPersistent();
-            motionBlurSliderComp.OnChange.m_Calls.Clear();
             motionBlurSliderComp.OnChange.AddListener(value => ChangeMotionBlurIntensity(motionBlurSliderComp.Value));
             motionBlurSlider.control.SetActive(SettingsManager.configMotionBlurEnabled.Value);
             motionBlurSlider.label.SetActive(SettingsManager.configMotionBlurEnabled.Value);
 
             //do that here otherwise master audio volume gets set
-            var motionBlur = GlobalPostProcess.instance.default_standard_profile.AddSettings<MotionBlur>();
+            if (!GlobalPostProcess.instance.default_standard_profile.HasSettings<MotionBlur>()) motionBlur = GlobalPostProcess.instance.default_standard_profile.AddSettings<MotionBlur>();
             motionBlur.active = SettingsManager.configMotionBlurEnabled.Value;
             motionBlur.sampleCount.value = 100;
             motionBlur.sampleCount.overrideState = true;

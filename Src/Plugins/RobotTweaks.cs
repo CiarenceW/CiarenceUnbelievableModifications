@@ -5,10 +5,13 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using VLB;
+using UnityEditor.PackageManager;
+using UnityEngine.Rendering.PostProcessing;
+using System.Threading.Tasks;
 
 namespace CiarenceUnbelievableModifications
 {
-    internal static class RobotTweaks
+    public static class RobotTweaks
     {
         public static Color tripmine_beam_colour;
         public static Color tripmine_beam_colour_triggered;
@@ -57,6 +60,25 @@ namespace CiarenceUnbelievableModifications
 
         public static bool campaign_has_override;
 
+        private static FieldInfo current_light_mode;
+
+        private static FieldInfo part;
+
+        private static FieldInfo light_color;
+
+        private static MethodInfo SetLightMode;
+
+        internal static void SetUpLightPartFieldReflections()
+        {
+            current_light_mode = typeof(LightPart).GetField("current_light_mode", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            part = typeof(LightPart).GetField("part", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            light_color = typeof(LightPart).GetField("light_color", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            SetLightMode = typeof(LightPart).GetMethod("SetLightMode", BindingFlags.Instance | BindingFlags.NonPublic);
+        }
+
         public static void PatchBombBotPrefab()
         {
             var bomb_bot = ReceiverCoreScript.Instance().enemy_prefabs.bomb_bot.GetComponent<BombBotScript>();
@@ -67,6 +89,18 @@ namespace CiarenceUnbelievableModifications
 
             //AccessTools.Field(typeof(LightPart), "passive_color").SetValue(__instance.enemy_prefabs.shock_drone.GetComponent<ShockDrone>().light_part, new Color(1f, 0f, 1f, 1f));
             //AccessTools.Field(typeof(LightPart), "light_color").SetValue(__instance.enemy_prefabs.shock_drone.GetComponent<ShockDrone>().light_part, new Color(1f, 0f, 1f, 1f));
+        }
+
+        internal static void PatchPowerLeechPrefab()
+        {
+            var power_leech = ReceiverCoreScript.Instance().enemy_prefabs.power_leech_bot.GetComponent<PowerLeechBot>();
+
+            power_leech.occlusion_component = ReceiverCoreScript.Instance().enemy_prefabs.turret.GetComponent<TurretScript>().occlusion_component;
+        }
+
+        internal static void OnChangeKilldroneLightColour()
+        {
+            UpdateColourPartLight();
         }
 
         //bear with me here but, wouldn't it be crazy if there were actual fucking tutorials for this sort of things?
@@ -155,81 +189,149 @@ namespace CiarenceUnbelievableModifications
             }
         }
 
-        //todo: maybe replace this by a transpiler, would probably be very boring and snore-inducing
-        [HarmonyPatch(typeof(LightPart), "UpdateLightMode")]
+        #region LightPartPatches
+
+        [HarmonyPatch(typeof(LightPart), "SetLightMode")]
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> TranspileSetLightMode(IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase __originalMethod)
+        {
+            CodeMatcher codeMatcher = new CodeMatcher(instructions, generator).MatchForward(true, new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(LightPart), "passive_color")));
+            
+            if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
+            {
+                codeMatcher.SetOperandAndAdvance(AccessTools.Field(typeof(LightPart), "part"));
+                codeMatcher.Insert(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(RobotTweaks), nameof(GetPassiveColour))));
+            }
+
+            codeMatcher.MatchForward(true, new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(LightPart), "alert_color")));
+
+            if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
+            {
+                codeMatcher.SetOperandAndAdvance(AccessTools.Field(typeof(LightPart), "part"));
+                codeMatcher.Insert(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(RobotTweaks), nameof(GetAlertColour))));
+            }
+
+            codeMatcher.MatchForward(true, new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(LightPart), "aggressive_color")));
+
+            if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
+            {
+                codeMatcher.SetOperandAndAdvance(AccessTools.Field(typeof(LightPart), "part"));
+                codeMatcher.Insert(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(RobotTweaks), nameof(GetAggressiveColour))));
+            }
+
+            codeMatcher.MatchForward(true, new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(LightPart), "passive_color")));
+
+            if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
+            {
+                codeMatcher.SetOperandAndAdvance(AccessTools.Field(typeof(LightPart), "part"));
+                codeMatcher.Insert(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(RobotTweaks), nameof(GetPassiveColour))));
+            }
+
+            return codeMatcher.InstructionEnumeration();
+        }
+
+        //needed to update the light's colour when first spawned in, other is blue until light mode change
+        [HarmonyPatch(typeof(LightPart), "Awake")]
         [HarmonyPostfix]
-        //can you tell from this that I'm going insane?
+        private static void PatchLightPartAwake(LightPart __instance)
+        {
+            /*
+            var passive_colour = GetPassiveColour(__instance.part);
+            UpdateColourPartLight(__instance);
+            light_color.SetValue(__instance, passive_colour);
+            __instance.spot_light.color = passive_colour;
+            __instance.beam.color = passive_colour;
+            if (verbose) Debug.Log(__instance.spot_light.color);
+            if (verbose) Debug.Log(__instance.light_color);
+            */
+        }
+
+        [HarmonyPatch(typeof(SecurityCamera), "Start")]
+        [HarmonyPrefix]
+        private static void PatchSecurityCameraStart(ref SecurityCamera __instance)
+        {
+            light_color.SetValue(__instance.light_part, colour_idle_camera);
+        }
+
+        [HarmonyPatch(typeof(ShockDrone), "Start")]
+        [HarmonyPrefix]
+        private static void PatchShockDroneStart(ref ShockDrone __instance)
+        {
+            light_color.SetValue(__instance.light_part, colour_idle_drone);
+        }
+
+        internal static void UpdateColourPartLight(LightPart instance = null)
+        {
+            if (instance != null)
+            {
+                SetLightMode.Invoke(instance, new object[] { current_light_mode.GetValue(instance) });
+                return;
+            }
+
+            var lightParts = Component.FindObjectsOfType<LightPart>();
+            for (int i = 0; i < lightParts.Length; i++)
+            {
+                SetLightMode.Invoke(lightParts[i], new object[] { current_light_mode.GetValue(lightParts[i]) });
+            }
+        }
+
+        [HarmonyPatch(typeof(LightPart), "UpdateLightMode")]
+        [HarmonyPrefix]
         private static void PatchLightPartUpdate(ref LightPart __instance)
         {
-            //let's assume, for the sake of the arguement that, hypothetically, the object that the LightPart is attached to is a Shock Drone.
-            var light_color = typeof(LightPart).GetField("light_color", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            //for the green demon
-            if (__instance.is_overridden) return;
-
-            var shockDroneScript = __instance.transform.parent.parent.GetComponent<ShockDrone>();
-            if (shockDroneScript != null)
-            {
-
-                var state = (ShockDroneState)typeof(ShockDrone).GetField("state", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(shockDroneScript);
-
-                switch (state)
-                {
-                    case ShockDroneState.Idle:
-                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_idle : colour_idle_drone);
-                        return;
-                    case ShockDroneState.Alert:
-                    case ShockDroneState.TrackPlayer:
-                    case ShockDroneState.Ramming:
-                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_alert : colour_alert_drone);
-                        return;
-                    case ShockDroneState.Attacking:
-                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_attack : colour_attacking_drone);
-                        return;
-                    case ShockDroneState.Standby:
-                        var passive_colour = colour_idle_drone;
-                        passive_colour.a = 0f;
-                        var passive_colour_override = colour_override_idle;
-                        passive_colour_override.a = 0f;
-                        light_color.SetValue(__instance, (campaign_has_override) ? passive_colour_override : passive_colour);
-                        return;
-                    default:
-                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_idle : colour_idle_drone);
-                        return;
-                }
-            }
-
-            //if the thing that the LightPart is attached isn't a shockdrone, we'll assume that it's a security cam.
-            var securityCameraScript = __instance.transform.parent.parent.GetComponent<SecurityCamera>();
-            if (securityCameraScript != null)
-            {
-                var state = (SecurityCameraState)typeof(SecurityCamera).GetField("state", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(securityCameraScript);
-
-                switch (state)
-                {
-                    case SecurityCameraState.Idle:
-                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_idle : colour_idle_camera);
-                        return;
-                    case SecurityCameraState.Alert:
-                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_alert : colour_alert_camera);
-                        return;
-                    case SecurityCameraState.Alarm:
-                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_attack : colour_alarming_camera);
-                        return;
-                    case SecurityCameraState.Off:
-                        var passive_colour = colour_idle_camera;
-                        passive_colour.a = 0f;
-                        var passive_colour_override = colour_override_idle;
-                        passive_colour_override.a = 0f;
-                        light_color.SetValue(__instance, (campaign_has_override) ? passive_colour_override : passive_colour);
-                        return;
-                    default:
-                        light_color.SetValue(__instance, (campaign_has_override) ? colour_override_idle : colour_idle_camera);
-                        return;
-                }
-            }
-            if (verbose) Debug.LogError("fucksguhuogsrgksgsfsgehlfse");
+            if (SettingsManager.configEnableTurretDiscoLights.Value == true && (!campaign_has_override || campaign_has_override && SettingsManager.configKilldroneColourOverride.Value == false))
+                UpdateColourPartLight(__instance);
         }
+
+        internal static void UpdateLightPartDefaultColour(Color lightColour, ReceiverEntityType entityType = ReceiverEntityType.Unknown)
+        {
+            var enemy_prefabs = ReceiverCoreScript.Instance().enemy_prefabs;
+            if (entityType == ReceiverEntityType.Unknown)
+            {
+                light_color.SetValue(enemy_prefabs.shock_drone.GetComponent<ShockDrone>().light_part, lightColour);
+                light_color.SetValue(enemy_prefabs.security_camera.GetComponent<SecurityCamera>().light_part, lightColour);
+                return;
+            }
+
+            var prefab = enemy_prefabs.GetPrefab(entityType);
+            if (entityType == ReceiverEntityType.Drone) light_color.SetValue(prefab.GetComponent<ShockDrone>().light_part, lightColour);
+            if (entityType == ReceiverEntityType.SecurityCamera)light_color.SetValue(prefab.GetComponent<SecurityCamera>().light_part, lightColour);
+        }
+
+        public static Color GetPassiveColour(RobotPart part)
+        {
+            if (campaign_has_override && SettingsManager.configKilldroneColourOverride.Value == true) 
+                return colour_override_idle;
+
+            if (part.robot is ShockDrone)
+                return colour_idle_drone;
+
+            return colour_idle_camera;
+        }
+
+        public static Color GetAlertColour(RobotPart part)
+        {
+            if (campaign_has_override && SettingsManager.configKilldroneColourOverride.Value == true)
+                return colour_override_alert;
+
+            if (part.robot is ShockDrone)
+                return colour_alert_drone;
+
+            return colour_alert_camera;
+        }
+
+        public static Color GetAggressiveColour(RobotPart part)
+        {
+            if (campaign_has_override && SettingsManager.configKilldroneColourOverride.Value == true)
+                return colour_override_attack;
+
+            if (part.robot is ShockDrone)
+                return colour_attacking_drone;
+
+            return colour_alarming_camera;
+        }
+
+        #endregion
 
         //for the turrets' camera colours when in TC, you can't change from which field the thing is read during runtime I think with Transpilers.
         public static void OnPlayerInitialize(ReceiverEventTypeVoid ev)
@@ -252,20 +354,40 @@ namespace CiarenceUnbelievableModifications
                 return;
             }
             campaign_has_override = true;
-            colour_override_idle = tc_colour_idle;
-            colour_override_alert = tc_colour_alert;
-            colour_override_attack = tc_colour_attack;
-            colour_normal = colour_override_idle;
-            colour_alert = colour_override_alert;
-            colour_alert_shooting = colour_override_attack;
-            tripmine_beam_colour = tc_tripmine_beam_colour;
-            tripmine_beam_colour_triggered = tc_tripmine_beam_colour_triggered;
+            SetOverrideColours(true);
             if (verbose) Debug.Log("player is bozo");
+        }
+
+        internal static void SetOverrideColours(bool enable)
+        {
+            if (enable && campaign_has_override && SettingsManager.configKilldroneColourOverride.Value == true)
+            {
+                colour_override_idle = tc_colour_idle;
+                colour_override_alert = tc_colour_alert;
+                colour_override_attack = tc_colour_attack;
+                colour_normal = colour_override_idle;
+                colour_alert = colour_override_alert;
+                colour_alert_shooting = colour_override_attack;
+                tripmine_beam_colour = tc_tripmine_beam_colour;
+                tripmine_beam_colour_triggered = tc_tripmine_beam_colour_triggered;
+                UpdateLightPartDefaultColour(colour_override_idle);
+            }
+            else
+            {
+                colour_normal = colour_idle_turret;
+                colour_alert = colour_alert_turret;
+                colour_alert_shooting = colour_attacking_turret;
+                tripmine_beam_colour = tripmine_beam_colour_normal;
+                tripmine_beam_colour_triggered = tripmine_beam_colour_triggered_normal;
+                UpdateLightPartDefaultColour(SettingsManager.configDroneColourIdle.Value, ReceiverEntityType.Drone);
+                UpdateLightPartDefaultColour(SettingsManager.configCameraColourIdle.Value, ReceiverEntityType.SecurityCamera);
+            }
+            UpdateColourPartLight();
         }
 
         public static void Discolights()
         {
-            if (!campaign_has_override)
+            if (!campaign_has_override || campaign_has_override && SettingsManager.configKilldroneColourOverride.Value == false)
             {
                 if (colour_a == random_a) random_a = Random.Range(0f, 1f);
                 if (colour_b == random_b) random_b = Random.Range(0f, 1f);
@@ -281,6 +403,7 @@ namespace CiarenceUnbelievableModifications
                 colour_normal = rainbow_colour;
                 colour_idle_drone = rainbow_colour;
                 colour_idle_camera = rainbow_colour;
+                UpdateLightPartDefaultColour(rainbow_colour);
             }
         }
     }

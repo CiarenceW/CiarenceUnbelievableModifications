@@ -10,12 +10,22 @@ using System.IO;
 using System.Reflection;
 using Receiver2;
 using UnityEngine.Rendering.PostProcessing;
+using HarmonyLib;
 
 namespace CiarenceUnbelievableModifications
 {
     internal static class SettingsManager
     {
-        internal static ConfigFile config = new ConfigFile(Path.Combine(Paths.ConfigPath, typeof(SettingsManager).Assembly.GetName().Name) + ".cfg", true);
+        //internal static ConfigFile config = new ConfigFile(Path.Combine(Paths.ConfigPath, typeof(SettingsManager).Assembly.GetName().Name) + ".cfg", true, (BepInPlugin)Attribute.GetCustomAttribute(typeof(MainPlugin), typeof(BepInPlugin)));
+        internal static ConfigFile config;
+
+        public static bool Verbose
+        {
+            get 
+            {
+                return configVerboseDebugEnabled.Value;
+            }
+        }
 
         const string debugCatName = "Debug";
         const string generalCatName = "General";
@@ -28,6 +38,8 @@ namespace CiarenceUnbelievableModifications
         const string cameraColCatName = killdroneCatName + " | Cameras";
         const string dropGunEverywhereCatName = "Drop gun everywhere";
         const string funStuffCatName = "Fun stuff";
+        const string tapeLocatron3000CatName = "Tape Locatron 3000";
+        const string itemGlintColourCatName = "Item Glint Colour";
 
         internal static ConfigEntry<bool> configSSREnabled;
         internal static ConfigEntry<string> configSSRQuality;
@@ -73,9 +85,20 @@ namespace CiarenceUnbelievableModifications
         internal static ConfigEntry<bool> configGunTweaks;
         internal static ConfigEntry<bool> configRobotTweaks;
         internal static ConfigEntry<bool> configVictorianFix;
+        internal static ConfigEntry<bool> configSpawnCompatibleMags;
+
+        internal static ConfigEntry<bool> configLimitFPSFocusLostEnabled;
+        internal static ConfigEntry<float> configLimitFPSFocusLostCount;
+
+        internal static ConfigEntry<bool> configTapeLocatron3000Enabled;
+        internal static ConfigEntry<Color> configTapeLocatron3000ColourOccluded;
+        internal static ConfigEntry<Color> configTapeLocatron3000ColourLos;
+
+        internal static ConfigEntry<bool> configInventoryGlintColourEnabled;
 
         internal static void InitializeAndBindSettings()
         {
+            config = MainPlugin.config;
 
             configVerboseDebugEnabled = config.Bind(debugCatName,
                 "VerboseEnabled",
@@ -88,11 +111,16 @@ namespace CiarenceUnbelievableModifications
                 true,
                 "Enable the flashlight tweaks");
 
-            //Fog tweaks config
+            //Custom campaign override colour config
             configKilldroneColourOverride = config.Bind(killdroneCatName,
                 "KilldroneColourOverride",
                 true,
                 "Enables custom colour for the killdrones on specific campaigns");
+
+            configKilldroneColourOverride.SettingChanged += (object sender, EventArgs args) =>
+            {
+                RobotTweaks.SetOverrideColours(configKilldroneColourOverride.Value);
+            };
 
             //Fog Colour tweaks config
             configFogColourBeginnerEast = config.Bind(fogCatName,
@@ -281,10 +309,11 @@ namespace CiarenceUnbelievableModifications
 
             //Victorian fix config
             configVictorianFix = config.Bind(generalCatName,
-                "VictorianFix",
+                "TileFix",
                 true,
-                "Enable the victorian top floor collider fix, requires restart");
+                "Enable the victorian top floor collider fix, and the Two Towers walkramp fix, requires restart");
 
+            #region MotionBlur
             configMotionBlurEnabled = config.Bind("Graphics",
                 "Enable Motion Blur",
                 false,
@@ -294,7 +323,9 @@ namespace CiarenceUnbelievableModifications
                 "Motion Blur Intensity",
                 100f,
                 new ConfigDescription("Intensity of the Motion Blur (sometimes known as shutter angle)", new AcceptableValueRange<float>(0f, 1000f)));
+            #endregion
 
+            #region SSR
             configSSREnabled = config.Bind("Graphics",
                 "Enable SSR",
                 false,
@@ -304,6 +335,79 @@ namespace CiarenceUnbelievableModifications
                 "SSR Quality",
                 "Medium",
                 new ConfigDescription("Quality of the Screen Space Reflections", new AcceptableValueList<string>("Lower", "Low", "Medium", "High", "Higher", "Ultra", "Overkill", "Receiver 2 Bespoke")));
+            #endregion
+
+            #region SpawnAllCompatibleMags
+            configSpawnCompatibleMags = config.Bind(generalCatName,
+                "Spawn Compatible Mags",
+                true,
+                "Spawns every compatible mag for current gun in the Dreaming");
+            #endregion
+
+            #region FocusLostFPSLimit
+            configLimitFPSFocusLostEnabled = config.Bind(generalCatName,
+                "Limit FPS on Focus Lost",
+                true,
+                "Enables the frame limiter when application is alt-tabbed");
+
+            configLimitFPSFocusLostCount = config.Bind(generalCatName,
+                "Focus lost FPS limit",
+                30f,
+                new ConfigDescription("What the FPS limit should be set at", new AcceptableValueRange<float>(15, 480)));
+            #endregion
+
+            #region TapeLocatron
+            configTapeLocatron3000Enabled = config.Bind(tapeLocatron3000CatName,
+                "Enable Tape Locatron 3000",
+                false,
+                "Enables the Tape Locatron 3000 ");
+
+            configTapeLocatron3000ColourOccluded = config.Bind(tapeLocatron3000CatName,
+                "Tape Locatron 3000 Occluded Colour",
+                Color.green,
+                "Colour for tapes that aren't in your direct line of sight");
+
+            configTapeLocatron3000ColourLos = config.Bind(tapeLocatron3000CatName,
+                "Tape Locatron 3000 Los Colour",
+                Color.magenta,
+                "Colour for tapes that are in your direct line of sight");
+            #endregion
+
+            #region Glint_colour
+            //Item Glint Colour config
+            configInventoryGlintColourEnabled = config.Bind(itemGlintColourCatName,
+                "Enable Random Glint Colour",
+                false,
+                "Enables the random glint colour for Inventory Items (rounds, mags, tapes)");
+
+            configInventoryGlintColourEnabled.SettingChanged += (s, e) =>
+            {
+                var inventoryItems = UnityEngine.Object.FindObjectsOfType<InventoryItem>();
+                if (configInventoryGlintColourEnabled.Value == true)
+                {
+                    Harmony.CreateAndPatchAll(typeof(InventoryGlintColourRandomizer), MainPlugin.InventoryGlintColourRandomizerHID);
+                    for (int i = 0; i < inventoryItems.Length; i++)
+                    {
+                        if (inventoryItems[i].glint_renderer != null && inventoryItems[i].glint_renderer.material != null)
+                        {
+                            inventoryItems[i].glint_renderer.material.SetColor("_GlintColor", UnityEngine.Random.ColorHSV(0, 1, 0, 1, 0.7f, 1));
+                        }
+                    }
+                }
+                else
+                {
+                    Harmony.UnpatchID(MainPlugin.InventoryGlintColourRandomizerHID);
+
+                    for (int i = 0; i < inventoryItems.Length; i++)
+                    {
+                        if (inventoryItems[i].glint_renderer != null && inventoryItems[i].glint_renderer.material != null)
+                        {
+                            inventoryItems[i].glint_renderer.material.SetColor("_GlintColor", InventoryGlintColourRandomizer.BaseGlintColour);
+                        }
+                    }
+                }
+            };
+            #endregion
 
             configMotionBlurEnabled.SettingChanged += (object sender, EventArgs args) =>
             {
@@ -435,7 +539,9 @@ namespace CiarenceUnbelievableModifications
 
                     RobotTweaks.colour_idle_drone = configDroneColourIdle.Value;
 
-                    RobotTweaks.colour_idle_camera = configDroneColourIdle.Value;
+                    RobotTweaks.colour_idle_camera = configCameraColourIdle.Value;
+
+                    RobotTweaks.UpdateColourPartLight();
                 }
             };
 
@@ -459,42 +565,53 @@ namespace CiarenceUnbelievableModifications
 
             configDroneColourIdle.SettingChanged += (object sender, EventArgs args) =>
             {
+                RobotTweaks.OnChangeKilldroneLightColour();
+                RobotTweaks.UpdateLightPartDefaultColour(configDroneColourIdle.Value, ReceiverEntityType.Drone);
                 if (CanChangeKillDroneLights()) RobotTweaks.colour_idle_drone = configDroneColourIdle.Value;
             };
             configDroneColourAlert.SettingChanged += (object sender, EventArgs args) =>
             {
+                RobotTweaks.OnChangeKilldroneLightColour();
                 if (CanChangeKillDroneLights()) RobotTweaks.colour_alert_drone = configDroneColourAlert.Value;
             };
             configDroneColourAttacking.SettingChanged += (object sender, EventArgs args) =>
             {
+                RobotTweaks.OnChangeKilldroneLightColour();
                 if (CanChangeKillDroneLights()) RobotTweaks.colour_attacking_drone = configDroneColourAttacking.Value;
             };
 
 
             configCameraColourIdle.SettingChanged += (object sender, EventArgs args) =>
             {
+                RobotTweaks.OnChangeKilldroneLightColour();
+                RobotTweaks.UpdateLightPartDefaultColour(configCameraColourIdle.Value, ReceiverEntityType.SecurityCamera);
                 if (CanChangeKillDroneLights()) RobotTweaks.colour_idle_camera = configCameraColourIdle.Value;
             };
             configCameraColourAlert.SettingChanged += (object sender, EventArgs args) =>
             {
+                RobotTweaks.OnChangeKilldroneLightColour();
                 if (CanChangeKillDroneLights()) RobotTweaks.colour_alert_camera = configCameraColourAlert.Value;
             };
             configCameraColourAlarming.SettingChanged += (object sender, EventArgs args) =>
             {
+                RobotTweaks.OnChangeKilldroneLightColour();
                 if (CanChangeKillDroneLights()) RobotTweaks.colour_alarming_camera = configCameraColourAlarming.Value;
             };
 
 
             configTurretColourNormal.SettingChanged += (object sender, EventArgs args) =>
             {
+                RobotTweaks.OnChangeKilldroneLightColour();
                 if (CanChangeKillDroneLights()) RobotTweaks.colour_normal = configTurretColourNormal.Value;
             };
             configTurretColourAlert.SettingChanged += (object sender, EventArgs args) =>
             {
+                RobotTweaks.OnChangeKilldroneLightColour();
                 if (CanChangeKillDroneLights()) RobotTweaks.colour_alert = configTurretColourAlert.Value;
             };
             configTurretColourAlertShooting.SettingChanged += (object sender, EventArgs args) =>
             {
+                RobotTweaks.OnChangeKilldroneLightColour();
                 if (CanChangeKillDroneLights()) RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
             };
 
