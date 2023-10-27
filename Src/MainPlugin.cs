@@ -49,22 +49,22 @@ namespace CiarenceUnbelievableModifications
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(rtlgTweaks.OnInitialize));
 
             AddTasksAtCoreStartup(
-                new ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchBombBotPrefab),
-                new ModdingKitCorePlugin.StartupAction(RobotTweaks.PatchPowerLeechPrefab),
-                new ModdingKitCorePlugin.StartupAction(GunTweaks.PatchDeaglesSpring),
-                new ModdingKitCorePlugin.StartupAction(GunTweaks.PatchHiPointCatchMagSlideAmount),
-                new ModdingKitCorePlugin.StartupAction(PostProcessTweaks.AddSettingsToStandardProfile),
-                new ModdingKitCorePlugin.StartupAction(FPSLimiterTweaks.Initialize),
-                new ModdingKitCorePlugin.StartupAction(Leaning.Initialize),
-                new ModdingKitCorePlugin.StartupAction(RobotTweaks.SetUpLightPartFieldReflections)
+                new ModdingKitEvents.StartupAction(RobotTweaks.PatchBombBotPrefab),
+                new ModdingKitEvents.StartupAction(RobotTweaks.PatchPowerLeechPrefab),
+                new ModdingKitEvents.StartupAction(GunTweaks.PatchDeaglesSpring),
+                new ModdingKitEvents.StartupAction(GunTweaks.PatchHiPointCatchMagSlideAmount),
+                new ModdingKitEvents.StartupAction(PostProcessTweaks.AddSettingsToStandardProfile),
+                new ModdingKitEvents.StartupAction(FPSLimiterTweaks.Initialize),
+                new ModdingKitEvents.StartupAction(Leaning.Initialize),
+                new ModdingKitEvents.StartupAction(RobotTweaks.SetUpLightPartFieldReflections)
                 );
         }
 
-        private void AddTasksAtCoreStartup(params ModdingKitCorePlugin.StartupAction[] startupActions)
+        private void AddTasksAtCoreStartup(params ModdingKitEvents.StartupAction[] startupActions)
         {
             for ( int i = 0; i < startupActions.Length; i++)
             {
-                ModdingKitCorePlugin.AddTaskAtCoreStartup(startupActions[i]);
+                ModdingKitEvents.AddTaskAtCoreStartup(startupActions[i]);
             }
         }
 

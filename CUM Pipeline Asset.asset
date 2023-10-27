@@ -50,7 +50,7 @@ MonoBehaviour:
   PerManifest: 0
   ListType: 0
   Manifests: []
-  workingDirectory: G:\SteamLibrary\steamapps\common\Receiver 2
+  workingDirectory: <GameDirectory>
   executable: Receiver2.exe
   arguments:
   - --doorstop-enable true

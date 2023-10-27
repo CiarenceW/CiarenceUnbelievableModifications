@@ -215,7 +215,7 @@ namespace CiarenceUnbelievableModifications
             configTimeToDropFlashlight = config.Bind(flashlightCatName,
                 "TimeToDropFlashlight",
                 0.5f,
-                new ConfigDescription("the amount of time you have to hold \"E\" to drop the gun that is currently in your hands", new AcceptableValueRange<float>(0f, 1f)));
+                new ConfigDescription("the amount of time you have to hold \"E\" to drop the flashlight if it's currently in your hands", new AcceptableValueRange<float>(0f, 1f)));
 
             //DropGunEverywhere config
             configDropGunEverywhere = config.Bind(generalCatName,

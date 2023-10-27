@@ -30,7 +30,7 @@ MonoBehaviour:
   m_Name: AssemblyDefinitions
   m_EditorClassIdentifier: 
   StagingPaths:
-  - C:\Users\coren\AppData\Roaming\r2modmanPlus-local\Receiver2\profiles\Default\BepInEx\plugins\CiarenceW-CiarencesUnbelievableModifications
+  - <GamePath>\BepInEx\plugins\CUM
   definitions:
   - {fileID: 5897886265953266890, guid: 78cf07aae3466ab4d85b620f0df27622, type: 3}
 --- !u!114 &7628540763557392683
