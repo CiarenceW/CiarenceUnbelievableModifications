@@ -258,6 +258,16 @@ namespace CiarenceUnbelievableModifications
         private static void PatchShockDroneStart(ref ShockDrone __instance)
         {
             light_color.SetValue(__instance.light_part, colour_idle_drone);
+
+        }
+
+        [HarmonyPatch(typeof(LightPart), "Start")]
+        [HarmonyPostfix]
+        private static void PatchLightPartStart(ref LightPart __instance)
+        {
+            __instance.SetTargetLightMode(LightPart.LightMode.Standby);
+            __instance.SendMessage("UpdateLightMode", false);
+            __instance.SendMessage("UpdateLights");
         }
 
         internal static void UpdateColourPartLight(LightPart instance = null)
