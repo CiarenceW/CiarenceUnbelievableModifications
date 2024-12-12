@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: deebcc5669e17114a9be0310ca658891
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - exposureHistogram: {fileID: 7200000, guid: 8c2fcbdf9bc58664f89917f7b9d79501, type: 3}
+  - multiScaleVOD1: {fileID: 7200000, guid: 4c63bc487e6c29a4a99f85a6c47b292b, type: 3}
+  - multiScaleVOD2: {fileID: 7200000, guid: e4d3e4779e48a374f91d48d4c0aedb7b, type: 3}
+  - multiScaleVOR: {fileID: 7200000, guid: 34a460e8a2e66c243a9c12024e5a798d, type: 3}
+  - multiScaleVOUS: {fileID: 7200000, guid: 600d6212b59bb40409d19d750b5fd1e9, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

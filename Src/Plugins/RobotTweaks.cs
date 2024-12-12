@@ -5,13 +5,17 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using VLB;
-using UnityEditor.PackageManager;
 using UnityEngine.Rendering.PostProcessing;
 using System.Threading.Tasks;
+using FMOD.Studio;
+using System.Runtime.CompilerServices;
+using System.Linq;
+using Receiver2ModdingKit.Helpers;
 
 namespace CiarenceUnbelievableModifications
 {
-    public static class RobotTweaks
+	#pragma warning disable IDE0051 //SHUT THE FUCK UP
+	public class RobotTweaks
     {
         public static Color tripmine_beam_colour;
         public static Color tripmine_beam_colour_triggered;
@@ -79,16 +83,243 @@ namespace CiarenceUnbelievableModifications
             SetLightMode = typeof(LightPart).GetMethod("SetLightMode", BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
-        public static void PatchBombBotPrefab()
+        internal class BombBotPatch
         {
-            var bomb_bot = ReceiverCoreScript.Instance().enemy_prefabs.bomb_bot.GetComponent<BombBotScript>();
+            public static void PatchBombBotPrefab()
+            {
+                var bomb_bot = ReceiverCoreScript.Instance().enemy_prefabs.bomb_bot.GetComponent<BombBotScript>();
 
-            //this doesn't currently do anything, I think it used to talk and stuff and it was cool but it doesn't anymore. It just beeps. Capitalism.
-            //Also, if you don't change it to a valid event like the one below, it used to soft-crash (is that a thing)
-            bomb_bot.voice_filter = "event:/TextToSpeech/TextToSpeech - bomb bot";
+                //this doesn't currently do anything, I think it used to talk and stuff and it was cool but it doesn't anymore. It just beeps. Capitalism.
+                //Also, if you don't change it to a valid event like the one below, it used to soft-crash (is that a thing)
+                bomb_bot.voice_filter = "event:/TextToSpeech/TextToSpeech - bomb bot";
 
-            //AccessTools.Field(typeof(LightPart), "passive_color").SetValue(__instance.enemy_prefabs.shock_drone.GetComponent<ShockDrone>().light_part, new Color(1f, 0f, 1f, 1f));
-            //AccessTools.Field(typeof(LightPart), "light_color").SetValue(__instance.enemy_prefabs.shock_drone.GetComponent<ShockDrone>().light_part, new Color(1f, 0f, 1f, 1f));
+                Locale.active_voice_clips.Add(VoiceClip.ThreateningPosture, new VoiceClipInstance
+                {
+                    id = VoiceClip.ThreateningPosture,
+                    name = "ThreateningPosture",
+                    voice_clip_path = "ThreateningPosture.wav"
+                });
+
+                Locale.active_voice_clips.Add(VoiceClip.ThreatOutOfSight, new VoiceClipInstance
+                {
+                    id = VoiceClip.ThreatOutOfSight,
+                    name = "ThreatOutOfSight",
+                    voice_clip_path = "ThreatOutOfSight.wav"
+                });
+
+                Locale.active_voice_clips.Add(VoiceClip.ThreatAlleviated, new VoiceClipInstance
+                {
+                    id = VoiceClip.ThreatAlleviated,
+                    name = "ThreatAlleviated",
+                    voice_clip_path = "ThreatAlleviated.wav"
+                });
+
+                Locale.active_voice_clips.Add(VoiceClip.InitiatingSelfDestruct, new VoiceClipInstance
+                {
+                    id = VoiceClip.InitiatingSelfDestruct,
+                    name = "InitiatingSelfDestruct",
+                    voice_clip_path = "InitiatingSelfDestruct.wav"
+                });
+
+                //AccessTools.Field(typeof(LightPart), "passive_color").SetValue(__instance.enemy_prefabs.shock_drone.GetComponent<ShockDrone>().light_part, new Color(1f, 0f, 1f, 1f));
+                //AccessTools.Field(typeof(LightPart), "light_color").SetValue(__instance.enemy_prefabs.shock_drone.GetComponent<ShockDrone>().light_part, new Color(1f, 0f, 1f, 1f));
+            }
+
+            internal class Patches
+            {
+                internal static FieldInfo callbackFieldInfo;
+
+                internal static FieldInfo GetCallbackFieldInfo()
+                {
+                    if (callbackFieldInfo == null)
+                    {
+                        var assembly = typeof(AudioManager).Assembly;
+                        var type = assembly.GetType("Receiver2.AudioManager+VoiceRequest");
+                        callbackFieldInfo = type.GetField("callback", BindingFlags.Public | BindingFlags.Instance);
+                    }
+
+                    return callbackFieldInfo;
+                }
+
+                internal static FieldInfo pathFieldInfo;
+
+                internal static FieldInfo GetPathFieldInfo()
+                {
+                    if (pathFieldInfo == null)
+                    {
+                        var assembly = typeof(AudioManager).Assembly;
+                        var type = assembly.GetType("Receiver2.AudioManager+VoiceRequest");
+                        pathFieldInfo = type.GetField("path", BindingFlags.Public | BindingFlags.Instance);
+                    }
+
+                    return pathFieldInfo;
+                }
+
+                internal static string GetCustomClipForPath(string path)
+                {
+                    string vc;
+
+                    switch (path.Split('/').Last())
+                    {
+                        case "InitiatingSelfDestruct.wav":
+                            vc = SettingsManager.initiatingSelfDestructAudioPath.Value;
+                            break;
+                        case "ThreatAlleviated.wav":
+                            vc = SettingsManager.threatAlleviatedAudioPath.Value; 
+                            break;
+                        case "ThreateningPosture.wav":
+                            vc = SettingsManager.threateningPostureAudioPath.Value;
+                            break;
+                        case "ThreatOutOfSight.wav":
+                            vc = SettingsManager.threatOutOfSightAudioPath.Value;
+                            break;
+                        default:
+                            vc = "fuck";
+                            break;
+                    }
+
+                    return vc;
+                }
+
+                [HarmonyPatch(typeof(AudioManager), "PlayDialogue")]
+                [HarmonyPrefix]
+                private static void ChangePath(object[] __args)
+                {
+                    if (SettingsManager.configBombBotModelSpeechReplacer.Value)
+                    {
+                        GetPathFieldInfo().SetValue(__args[0], GetCustomClipForPath(GetPathFieldInfo().GetValue(__args[0]) as string));
+                    }
+                }
+
+                [HarmonyPatch(typeof(AudioManager), "PlayDialogue")]
+                [HarmonyPostfix]
+				private static void DoTheFuckingCallbackBitch(AudioManager __instance, EventInstance __result, object[] __args)
+				{
+                    //this makes the BombBot cut itself off if it's already saying something, I didn't do this for nothing, yay!!! 
+                    //also makes the light change intensity based on what the bomb bot is saying
+                    var piss = GetCallbackFieldInfo().GetValue(__args[0]) as AudioManager.VoiceRequestDelegate;
+                    piss.Invoke(__result);
+                }
+
+                [HarmonyPatch(typeof(BombBotScript), "SwitchState")]
+                [HarmonyPostfix]
+                private static void ChangeEmissiveColor(BombBotScript __instance, object[] __args)
+                {
+                    var body = __instance.transform.Find("pCylinder204_0");
+
+                    if (body != null) body.GetComponent<MeshRenderer>().sharedMaterial.SetColor("_EmissionColor", __instance.light.color);
+
+                    if ((int)__args[0] == 3 && body != null)
+                    {
+                        if (!__instance.TryGetComponent<JarEmptier>(out var _))
+                        {
+                            var emptier = __instance.gameObject.AddComponent<JarEmptier>();
+                        }
+                    }
+                }
+
+                [HarmonyPatch(typeof(BombBotScript), "Awake")]
+                [HarmonyPostfix]
+                private static void MakeVisionColliderGood(BombBotScript __instance, ref Bounds ___bounding_box)
+                {
+					//some bullshit happened with the detection's collider thing and it's really high up in the sky for no reason, so we'll just make it good :)
+					___bounding_box.center = __instance.transform.position + new Vector3(0, 0.75f, 0);
+					___bounding_box.extents = new Vector3(0.501f, 1.5f, 0.501f);
+                }
+
+				[HarmonyPatch(typeof(BombBotScript), nameof(BombBotScript.OnDisable))]
+				[HarmonyPostfix]
+				private static void StopSpeechInstanceOnDisable(BombBotScript __instance, ref EventInstance ___speech_instance)
+				{
+					___speech_instance.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
+				}
+            }
+
+            internal static class Transpilers
+            {
+                [HarmonyPatch(typeof(AudioManager), nameof(AudioManager.PlayVoiceClip))]
+                [HarmonyTranspiler]
+                private static IEnumerable<CodeInstruction> PatchShitPath(IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase __originalMethod)
+                {
+                    CodeMatcher codeMatcher = new CodeMatcher(instructions, generator)
+                        .MatchForward(true,
+                        new CodeMatch(OpCodes.Call, AccessTools.Method(typeof(Application), "get_streamingAssetsPath")),
+                        new CodeMatch(OpCodes.Ldstr)
+                        );
+
+                    if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
+                    {
+                        codeMatcher.SetOperandAndAdvance("/Sounds/TTSVoiceClips/");
+                    }
+
+                    return codeMatcher.InstructionEnumeration();
+                }
+            }
+
+            public class JarEmptier : MonoBehaviour
+            {
+                public float endTime;
+
+                public float startTime;
+
+                public Transform liquidTransform;
+
+                public Transform tubeLiquidTransform;
+
+				public MeshRenderer headRenderer;
+
+                public BombBotScript bombBot;
+
+				private float bubblyMultiplier;
+
+				private static MaterialPropertyBlock bubblyMPB;
+
+                private void Awake()
+                {
+					bubblyMPB = new MaterialPropertyBlock();
+
+                    Debug.Log("started emptying");
+
+                    bombBot = GetComponent<BombBotScript>();
+
+                    liquidTransform = transform.Find("pCylinder224_0");
+
+					headRenderer = liquidTransform.GetComponent<MeshRenderer>();
+					bubblyMultiplier = headRenderer.material.GetFloat("_BubblyMultiplier");
+
+					tubeLiquidTransform = transform.Find("Line1135_0");
+
+                    startTime = Time.time + 0.01f;
+
+                    endTime = Time.time + 15f;
+                }
+
+				private void Update()
+                {
+                    if (bombBot.IsIncapacitated())
+                    {
+                        liquidTransform.gameObject.SetActive(false);
+
+                        tubeLiquidTransform.gameObject.SetActive(false);
+
+                        Destroy(this);
+                    }
+
+                    if (liquidTransform != null)
+                    {
+						bubblyMultiplier += 0.01f * Time.deltaTime;
+						bubblyMPB.SetFloat("_BubblyMultiplier", bubblyMultiplier);
+						headRenderer.SetPropertyBlock(bubblyMPB);
+                        liquidTransform.localScale = new Vector3(1, Mathf.Lerp(2, 0, (startTime - Time.time) / (startTime - endTime)), 1);
+                        liquidTransform.localPosition = new Vector3(0, Mathf.Lerp(1.7129f, 1.6349f, (startTime - Time.time) / (startTime - endTime)), 0);
+                    }
+
+                    if (tubeLiquidTransform != null)
+                    {
+                        tubeLiquidTransform.gameObject.SetActive(true);
+                    }
+                }
+            }
         }
 
         internal static void PatchPowerLeechPrefab()
@@ -113,7 +344,7 @@ namespace CiarenceUnbelievableModifications
         {
             private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase __originalMethod)
             {
-                CodeMatcher codeMatcher = new CodeMatcher(instructions, generator).MatchForward(false, new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Light), "set_color")));
+                SmartCodeMatcher codeMatcher = new SmartCodeMatcher(instructions, generator).MatchForward(false, new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(Light), "set_color")));
 
                 if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
                 {
@@ -230,44 +461,31 @@ namespace CiarenceUnbelievableModifications
             return codeMatcher.InstructionEnumeration();
         }
 
-        //needed to update the light's colour when first spawned in, other is blue until light mode change
-        [HarmonyPatch(typeof(LightPart), "Awake")]
-        [HarmonyPostfix]
-        private static void PatchLightPartAwake(LightPart __instance)
-        {
-            /*
-            var passive_colour = GetPassiveColour(__instance.part);
-            UpdateColourPartLight(__instance);
-            light_color.SetValue(__instance, passive_colour);
-            __instance.spot_light.color = passive_colour;
-            __instance.beam.color = passive_colour;
-            if (verbose) Debug.Log(__instance.spot_light.color);
-            if (verbose) Debug.Log(__instance.light_color);
-            */
-        }
-
         [HarmonyPatch(typeof(SecurityCamera), "Start")]
-        [HarmonyPrefix]
+        [HarmonyPostfix]
         private static void PatchSecurityCameraStart(ref SecurityCamera __instance)
         {
-            light_color.SetValue(__instance.light_part, colour_idle_camera);
+            light_color.SetValue(__instance.light_part, (CustomCampaignChecker.ShouldOverrideColour) ? colour_override_idle : colour_idle_camera);
         }
 
         [HarmonyPatch(typeof(ShockDrone), "Start")]
-        [HarmonyPrefix]
+        [HarmonyPostfix]
         private static void PatchShockDroneStart(ref ShockDrone __instance)
         {
-            light_color.SetValue(__instance.light_part, colour_idle_drone);
+            light_color.SetValue(__instance.light_part, (CustomCampaignChecker.ShouldOverrideColour) ? colour_override_idle : colour_idle_drone);
 
         }
 
         [HarmonyPatch(typeof(LightPart), "Start")]
         [HarmonyPostfix]
-        private static void PatchLightPartStart(ref LightPart __instance)
+        private static void PatchLightPartStart(ref LightPart __instance, LightPart.LightMode ___current_light_mode)
         {
-            __instance.SetTargetLightMode(LightPart.LightMode.Standby);
-            __instance.SendMessage("UpdateLightMode", false);
-            __instance.SendMessage("UpdateLights");
+            if (__instance.spot_light.intensity != 0f)
+            {
+                __instance.SetTargetLightMode(___current_light_mode, true);
+                __instance.SendMessage("UpdateLightMode", true);
+                __instance.SendMessage("UpdateLights");
+            }
         }
 
         internal static void UpdateColourPartLight(LightPart instance = null)
@@ -289,7 +507,7 @@ namespace CiarenceUnbelievableModifications
         [HarmonyPrefix]
         private static void PatchLightPartUpdate(ref LightPart __instance)
         {
-            if (SettingsManager.configEnableTurretDiscoLights.Value == true && (!campaign_has_override || campaign_has_override && SettingsManager.configKilldroneColourOverride.Value == false))
+            if (SettingsManager.configEnableTurretDiscoLights.Value == true && CustomCampaignChecker.ShouldOverrideColour)
                 UpdateColourPartLight(__instance);
         }
 
@@ -342,31 +560,6 @@ namespace CiarenceUnbelievableModifications
         }
 
         #endregion
-
-        //for the turrets' camera colours when in TC, you can't change from which field the thing is read during runtime I think with Transpilers.
-        public static void OnPlayerInitialize(ReceiverEventTypeVoid ev)
-        {
-            if (ReceiverCoreScript.Instance().game_mode.GetGameMode() != GameMode.RankingCampaign) return;
-
-            FieldInfo campaign_name = typeof(RankingProgressionGameMode).GetField("campaign_name", BindingFlags.Instance | BindingFlags.NonPublic);
-            RankingProgressionGameMode rpgm = ReceiverCoreScript.Instance().game_mode.GetComponent<RankingProgressionGameMode>();
-            if (verbose) Debug.Log(campaign_name.GetValue(rpgm));
-            if ((string)campaign_name.GetValue(rpgm) != "bozo_torture_campaign")
-            {
-                campaign_has_override = false;
-                colour_normal = colour_idle_turret;
-                colour_alert = colour_alert_turret;
-                colour_alert_shooting = colour_attacking_turret;
-                tripmine_beam_colour = tripmine_beam_colour_normal;
-                if (verbose) Debug.LogFormat("{0} <- {1}", tripmine_beam_colour, tripmine_beam_colour_normal);
-                tripmine_beam_colour_triggered = tripmine_beam_colour_triggered_normal;
-                if (verbose) Debug.LogFormat("{0} <- {1}", tripmine_beam_colour_triggered, tripmine_beam_colour_triggered_normal);
-                return;
-            }
-            campaign_has_override = true;
-            SetOverrideColours(true);
-            if (verbose) Debug.Log("player is bozo");
-        }
 
         internal static void SetOverrideColours(bool enable)
         {

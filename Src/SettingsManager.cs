@@ -11,6 +11,7 @@ using System.Reflection;
 using Receiver2;
 using UnityEngine.Rendering.PostProcessing;
 using HarmonyLib;
+using Receiver2ModdingKit;
 
 namespace CiarenceUnbelievableModifications
 {
@@ -40,14 +41,19 @@ namespace CiarenceUnbelievableModifications
         const string funStuffCatName = "Fun stuff";
         const string tapeLocatron3000CatName = "Tape Locatron 3000";
         const string itemGlintColourCatName = "Item Glint Colour";
+        const string bombBotTweaksCatName = "Bomb Bot Tweaks";
+		const string hudScalingCatName = "HUD Scaling";
 
         internal static ConfigEntry<bool> configSSREnabled;
         internal static ConfigEntry<string> configSSRQuality;
+
         internal static ConfigEntry<bool> configMotionBlurEnabled;
         internal static ConfigEntry<float> configMotionBlurIntensity;
 
         internal static ConfigEntry<bool> configVerboseDebugEnabled;
+
         internal static ConfigEntry<bool> configKilldroneColourOverride;
+
         internal static ConfigEntry<Color> configFogColourBeginnerEast;
         internal static ConfigEntry<Color> configFogColourBeginnerWest;
         internal static ConfigEntry<Color> configFogColourSleeperEast;
@@ -60,17 +66,24 @@ namespace CiarenceUnbelievableModifications
         internal static ConfigEntry<Color> configFogColourAwakeWest;
         internal static ConfigEntry<Color> configFogColourOtherEast;
         internal static ConfigEntry<Color> configFogColourOtherWest;
+
         internal static ConfigEntry<Color> configTripmineBeamColour;
         internal static ConfigEntry<Color> configTripmineBeamTriggeredColour;
+
         internal static ConfigEntry<bool> configFlashlightTweaks;
         internal static ConfigEntry<bool> configDiscoFlashlight;
         internal static ConfigEntry<float> configTimeToDropFlashlight;
         internal static ConfigEntry<Color> configFlashlightColour;
         internal static ConfigEntry<KeyCode> configFlashlightToggleKey;
+
         internal static ConfigEntry<bool> configDropGunEverywhere;
+
         internal static ConfigEntry<float> configTimeToDropGun;
+
         internal static ConfigEntry<KeyCode> configForceXrayKey;
+
         internal static ConfigEntry<bool> configEnableTurretDiscoLights;
+
         internal static ConfigEntry<Color> configTurretColourNormal;
         internal static ConfigEntry<Color> configTurretColourAlert;
         internal static ConfigEntry<Color> configTurretColourAlertShooting;
@@ -80,11 +93,17 @@ namespace CiarenceUnbelievableModifications
         internal static ConfigEntry<Color> configCameraColourIdle;
         internal static ConfigEntry<Color> configCameraColourAlert;
         internal static ConfigEntry<Color> configCameraColourAlarming;
+
         internal static ConfigEntry<int> configDiscoTimescale;
+
         internal static ConfigEntry<bool> configTurretAmmoBoxBoom;
+
         internal static ConfigEntry<bool> configGunTweaks;
+
         internal static ConfigEntry<bool> configRobotTweaks;
+
         internal static ConfigEntry<bool> configVictorianFix;
+
         internal static ConfigEntry<bool> configSpawnCompatibleMags;
 
         internal static ConfigEntry<bool> configLimitFPSFocusLostEnabled;
@@ -94,7 +113,18 @@ namespace CiarenceUnbelievableModifications
         internal static ConfigEntry<Color> configTapeLocatron3000ColourOccluded;
         internal static ConfigEntry<Color> configTapeLocatron3000ColourLos;
 
+        internal static ConfigEntry<bool> configReplaceBombBotModel;
+        internal static ConfigEntry<bool> configBombBotModelSpeechReplacer;
+        internal static ConfigEntry<string> initiatingSelfDestructAudioPath;
+        internal static ConfigEntry<string> threateningPostureAudioPath;
+        internal static ConfigEntry<string> threatOutOfSightAudioPath;
+        internal static ConfigEntry<string> threatAlleviatedAudioPath;
+
         internal static ConfigEntry<bool> configInventoryGlintColourEnabled;
+
+		internal static ConfigEntry<bool> configEnableHUDScaling;
+		internal static ConfigEntry<UnityEngine.UI.CanvasScaler.ScaleMode> configHUDScaleMode;
+		internal static ConfigEntry<float> configHUDScaleFactor;
 
         internal static void InitializeAndBindSettings()
         {
@@ -119,7 +149,7 @@ namespace CiarenceUnbelievableModifications
 
             configKilldroneColourOverride.SettingChanged += (object sender, EventArgs args) =>
             {
-                RobotTweaks.SetOverrideColours(configKilldroneColourOverride.Value);
+                if (ReceiverCoreScript.Instance() != null && ReceiverCoreScript.Instance().enemy_prefabs != null) RobotTweaks.SetOverrideColours(configKilldroneColourOverride.Value);
             };
 
             //Fog Colour tweaks config
@@ -183,17 +213,6 @@ namespace CiarenceUnbelievableModifications
                 PostProcessTweaks.west_other_colour,
                 "The color of the fog on the west side for the Compound, etc...");
 
-            //Tripmine beam colour
-            configTripmineBeamColour = config.Bind(tripmineColCatName,
-                "TripmineBeamColour",
-                Color.red,
-                "The colour of the tripmine's light beam");
-
-            configTripmineBeamTriggeredColour = config.Bind(tripmineColCatName,
-                "TripmineBeamTriggeredColour",
-                Color.cyan,
-                "The colour of the tripmine's light beam when triggered");
-
             //Flashlight disco config
             configDiscoFlashlight = config.Bind(funStuffCatName,
                 "DiscoFlashlight",
@@ -235,12 +254,19 @@ namespace CiarenceUnbelievableModifications
                 true,
                 "Enable shrapnel when shooting the turret's ammo box (if it still has ammo)");
 
+            configTurretAmmoBoxBoom.SettingChanged += (object sender, EventArgs args) =>
+            {
+                if (configTurretAmmoBoxBoom.Value) TurretAmmoBoxBoom.Enable();
+                else TurretAmmoBoxBoom.Disable();
+            };
+
             //Gun tweaks config
             configGunTweaks = config.Bind(generalCatName,
                 "GunTweaks",
                 true,
                 "Enable the gun fixes/changes/stuff, requires restart");
 
+            #region RobotTweaks
             //Robroes tweaks config
             configRobotTweaks = config.Bind(generalCatName,
                 "RobotTweaks",
@@ -258,9 +284,68 @@ namespace CiarenceUnbelievableModifications
                 "TurretDiscoLightsTimescale",
                 5,
                 new ConfigDescription("Speed at which the colours change for the disco modes", new AcceptableValueRange<int>(0, 30)));
+			#endregion
 
-            //Turret colour config
-            configTurretColourNormal = config.Bind(turretColCatName,
+			#region BombBotTweaks
+
+			configReplaceBombBotModel = config.Bind(bombBotTweaksCatName,
+                "ReplaceBombBotModel",
+                true,
+                "Replaces the placeholder Bomb Bot model with the cool final one");
+
+            configBombBotModelSpeechReplacer = config.Bind(bombBotTweaksCatName,
+                "BombBotModelReplaceSpeech",
+                false,
+                "Allows you to replace the voice clips that the bomb bot plays by setting your own paths");
+
+            initiatingSelfDestructAudioPath = config.Bind(bombBotTweaksCatName,
+                "InitiatingSelfDestructAudioPath",
+                Application.streamingAssetsPath + "/Sounds/TTSVoiceClips/" + "InitiatingSelfDestruct.wav",
+                "The path of the InitiatingSelfDestruct voice clip");
+
+            threateningPostureAudioPath = config.Bind(bombBotTweaksCatName,
+                "ThreateningPostureAudioPath",
+                Application.streamingAssetsPath + "/Sounds/TTSVoiceClips/" + "ThreateningPosture.wav",
+                "The path of the ThreateningPosture voice clip");
+
+            threatOutOfSightAudioPath = config.Bind(bombBotTweaksCatName,
+                "ThreatOutOfSightAudioPath",
+                Application.streamingAssetsPath + "/Sounds/TTSVoiceClips/" + "ThreatOutOfSight.wav",
+                "The path of the ThreatOutOfSight voice clip");
+
+            threatAlleviatedAudioPath = config.Bind(bombBotTweaksCatName,
+                "ThreatAlleviatedAudioPath",
+                Application.streamingAssetsPath + "/Sounds/TTSVoiceClips/" + "ThreatAlleviated.wav",
+                "The path of the ThreatAlleviated voice clip");
+
+			#endregion
+
+			#region HUDScalingTweaks
+			configEnableHUDScaling = config.Bind(hudScalingCatName,
+				"EnableHUDScaling",
+				true,
+				"Enable HUD Scaling based on factor or screen resolution");
+
+			configHUDScaleMode = config.Bind(hudScalingCatName,
+				"HUDScaleMode",
+				UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize,
+				"Selects which mode to scale the HUD with, ScaleWithScreenSize or ConstantPixelSize recommended");
+
+			configHUDScaleFactor = config.Bind(hudScalingCatName,
+				"HUDScaleFactor",
+				1.3f,
+				"The factor by which the screen will be scaled in ConstantPixelSize mode");
+
+			if (configEnableHUDScaling.Value)
+			{
+				ModdingKitEvents.AddTaskAtCoreStartup(new ModdingKitEvents.StartupAction(HUDScalingTweak.SetHUDScaleFactor));
+				ModdingKitEvents.AddTaskAtCoreStartup(new ModdingKitEvents.StartupAction(HUDScalingTweak.ChangeHUDScaleMode));
+			}
+			#endregion
+
+			#region TurretColourConfig
+			//Turret colour config
+			configTurretColourNormal = config.Bind(turretColCatName,
                 "TurretColourNormal",
                 Color.blue,
                 "Colour for the turret's camera");
@@ -274,7 +359,9 @@ namespace CiarenceUnbelievableModifications
                 "TurretColourAlertShooting",
                 Color.red,
                 "Colour for the turret's camera while alert and shooting");
+            #endregion
 
+            #region ShockDroneColourConfig
             //Shock Drone colour config
             configDroneColourIdle = config.Bind(shockdroneColCatName,
                 "ShockDroneColourIdle",
@@ -290,7 +377,9 @@ namespace CiarenceUnbelievableModifications
                 "ShockDroneColourShocking",
                 Color.red,
                 "Colour for the shock drone's camera while zapping");
+            #endregion
 
+            #region SecurityCameraColourConfig
             //Camera colour config
             configCameraColourIdle = config.Bind(cameraColCatName,
                 "CameraColourNormal",
@@ -306,6 +395,20 @@ namespace CiarenceUnbelievableModifications
                 "CameraColourAlarming",
                 Color.red,
                 "Colour for the camera's camera while screaming loudly ow");
+            #endregion
+
+            #region TripmineColour
+            //Tripmine beam colour
+            configTripmineBeamColour = config.Bind(tripmineColCatName,
+                "TripmineBeamColour",
+                Color.red,
+                "The colour of the tripmine's light beam");
+
+            configTripmineBeamTriggeredColour = config.Bind(tripmineColCatName,
+                "TripmineBeamTriggeredColour",
+                Color.cyan,
+                "The colour of the tripmine's light beam when triggered");
+            #endregion
 
             //Victorian fix config
             configVictorianFix = config.Bind(generalCatName,
@@ -342,6 +445,14 @@ namespace CiarenceUnbelievableModifications
                 "Spawn Compatible Mags",
                 true,
                 "Spawns every compatible mag for current gun in the Dreaming");
+
+            configSpawnCompatibleMags.SettingChanged += (s, e) =>
+            {
+                if (configSpawnCompatibleMags.Value == true)
+                    Harmony.CreateAndPatchAll(typeof(rtlgTweaks.SpawnCompatibleMagsTweak), MainPlugin.SpawnCompatibleMagsHID);
+                else
+                    Harmony.UnpatchID(MainPlugin.SpawnCompatibleMagsHID);
+            };
             #endregion
 
             #region FocusLostFPSLimit
@@ -407,9 +518,9 @@ namespace CiarenceUnbelievableModifications
                     }
                 }
             };
-            #endregion
+			#endregion
 
-            configMotionBlurEnabled.SettingChanged += (object sender, EventArgs args) =>
+			configMotionBlurEnabled.SettingChanged += (object sender, EventArgs args) =>
             {
                 PostProcessTweaks.ToggleMotionBlur();
             };
@@ -431,12 +542,6 @@ namespace CiarenceUnbelievableModifications
             {
                 if (configDropGunEverywhere.Value) DropGunEverywhere.Enable();
                 else DropGunEverywhere.Disable();
-            };
-
-            configTurretAmmoBoxBoom.SettingChanged += (object sender, EventArgs args) =>
-            {
-                if (configTurretAmmoBoxBoom.Value) TurretAmmoBoxBoom.Enable();
-                else TurretAmmoBoxBoom.Disable();
             };
 
             configFogColourBeginnerEast.SettingChanged += (object sender, EventArgs args) =>
@@ -541,7 +646,7 @@ namespace CiarenceUnbelievableModifications
 
                     RobotTweaks.colour_idle_camera = configCameraColourIdle.Value;
 
-                    RobotTweaks.UpdateColourPartLight();
+                    if (ReceiverCoreScript.Instance() != null && ReceiverCoreScript.Instance().enemy_prefabs != null) RobotTweaks.UpdateColourPartLight();
                 }
             };
 
@@ -566,7 +671,7 @@ namespace CiarenceUnbelievableModifications
             configDroneColourIdle.SettingChanged += (object sender, EventArgs args) =>
             {
                 RobotTweaks.OnChangeKilldroneLightColour();
-                RobotTweaks.UpdateLightPartDefaultColour(configDroneColourIdle.Value, ReceiverEntityType.Drone);
+                if (ReceiverCoreScript.TryGetInstance(out var _)) RobotTweaks.UpdateLightPartDefaultColour(configDroneColourIdle.Value, ReceiverEntityType.Drone);
                 if (CanChangeKillDroneLights()) RobotTweaks.colour_idle_drone = configDroneColourIdle.Value;
             };
             configDroneColourAlert.SettingChanged += (object sender, EventArgs args) =>
@@ -584,7 +689,7 @@ namespace CiarenceUnbelievableModifications
             configCameraColourIdle.SettingChanged += (object sender, EventArgs args) =>
             {
                 RobotTweaks.OnChangeKilldroneLightColour();
-                RobotTweaks.UpdateLightPartDefaultColour(configCameraColourIdle.Value, ReceiverEntityType.SecurityCamera);
+                if (ReceiverCoreScript.TryGetInstance(out var _)) RobotTweaks.UpdateLightPartDefaultColour(configCameraColourIdle.Value, ReceiverEntityType.SecurityCamera);
                 if (CanChangeKillDroneLights()) RobotTweaks.colour_idle_camera = configCameraColourIdle.Value;
             };
             configCameraColourAlert.SettingChanged += (object sender, EventArgs args) =>
@@ -614,6 +719,20 @@ namespace CiarenceUnbelievableModifications
                 RobotTweaks.OnChangeKilldroneLightColour();
                 if (CanChangeKillDroneLights()) RobotTweaks.colour_alert_shooting = configTurretColourAlertShooting.Value;
             };
+
+			configEnableHUDScaling.SettingChanged += (object sender, EventArgs args) =>
+			{
+				if (!configEnableHUDScaling.Value)
+				{
+					PlayerGUI.Instance.canvas.GetComponent<UnityEngine.UI.CanvasScaler>().uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ConstantPixelSize;
+					PlayerGUI.Instance.canvas.GetComponent<UnityEngine.UI.CanvasScaler>().scaleFactor = 1f;
+				}
+				else
+				{
+					HUDScalingTweak.SetHUDScaleFactor();
+					HUDScalingTweak.ChangeHUDScaleMode();
+				}
+			};
 
             //Fog custom colours
             PostProcessTweaks.east_other_colour = configFogColourOtherEast.Value;

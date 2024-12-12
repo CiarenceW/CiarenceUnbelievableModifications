@@ -18,17 +18,13 @@ namespace CiarenceUnbelievableModifications
 
         [HarmonyPatch(typeof(RuntimeTileLevelGenerator), "Update")]
         [HarmonyPostfix]
-        private static void PatchRuntimeTileGenUpdate(ref RuntimeTileLevelGenerator __instance)
+        private static void PatchRuntimeTileGenUpdate(ref RuntimeTileLevelGenerator __instance, List<(int, ActiveItem)> ___tapes_closest_to_player)
         {
             if (LocalAimHandler.player_instance != null)
             {
                 if (SettingsManager.configTapeLocatron3000Enabled.Value == false) return;
 
-                var tapes_closest_to_player = AccessTools.Field(typeof(RuntimeTileLevelGenerator), "tapes_closest_to_player").GetValue(__instance) as List<(int, ActiveItem)>;
-
-                //fuck you
-                foreach (ValueTuple<int, ActiveItem> closest_tape in tapes_closest_to_player)
-                //foreach (TapeGroupItem tape in Object.FindObjectsOfType<TapeGroupItem>())
+                foreach (var closest_tape in ___tapes_closest_to_player)
                 {
                     var tape = closest_tape.Item2;
                     if (LocalAimHandler.player_instance.main_camera != null)

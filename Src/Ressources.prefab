@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3621187334334837468
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6365439775214534781}
+  - component: {fileID: 3257911111862420459}
+  m_Layer: 0
+  m_Name: Ressources
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6365439775214534781
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3621187334334837468}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3257911111862420459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3621187334334837468}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deebcc5669e17114a9be0310ca658891, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  computeShaders:
+    autoExposure: {fileID: 7200000, guid: 34845e0ca016b7448842e965db5890a5, type: 3}
+    exposureHistogram: {fileID: 7200000, guid: 8c2fcbdf9bc58664f89917f7b9d79501, type: 3}
+    lut3DBaker: {fileID: 7200000, guid: 42496b74c071f5749950ca1abe33e945, type: 3}
+    texture3dLerp: {fileID: 7200000, guid: 31e9175024adfd44aba2530ff9b77494, type: 3}
+    gammaHistogram: {fileID: 7200000, guid: 18183ebfeeab97749b43e38b928604a7, type: 3}
+    waveform: {fileID: 7200000, guid: 92c63830cd50c0b4fbb8233613839958, type: 3}
+    vectorscope: {fileID: 7200000, guid: e1efca7c36fd01840aae0dd10378de5c, type: 3}
+    multiScaleAODownsample1: {fileID: 7200000, guid: 4c63bc487e6c29a4a99f85a6c47b292b,
+      type: 3}
+    multiScaleAODownsample2: {fileID: 7200000, guid: e4d3e4779e48a374f91d48d4c0aedb7b,
+      type: 3}
+    multiScaleAORender: {fileID: 7200000, guid: 34a460e8a2e66c243a9c12024e5a798d,
+      type: 3}
+    multiScaleAOUpsample: {fileID: 7200000, guid: 600d6212b59bb40409d19d750b5fd1e9,
+      type: 3}
+    gaussianDownsample: {fileID: 7200000, guid: 6dba4103d23a7904fbc49099355aff3e,
+      type: 3}
+  bombBotNewPrefab: {fileID: 6639354506485391221, guid: d6800c8a232ce13428bdca6ea982ce48,
+    type: 3}

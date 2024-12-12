@@ -10,7 +10,7 @@ using UnityEngine.Rendering.PostProcessing;
 
 namespace CiarenceUnbelievableModifications
 {
-    internal static class PostProcessTweaks
+	internal static class PostProcessTweaks
     {
         private static LocalAimHandler lah;
         private static ReceiverFog receiver_fog;
@@ -95,12 +95,14 @@ namespace CiarenceUnbelievableModifications
         }
 
         public static void OnPlayerInitialize(ReceiverEventTypeVoid ev)
-        {
-            receiver_fog = null;
+		{
+			receiver_fog = null;
 
             List<PostProcessVolume> volumes = new List<PostProcessVolume>();
             PostProcessManager.instance.GetActiveVolumes(ReceiverCoreScript.Instance().player.lah.main_camera.GetComponent<PostProcessLayer>(), volumes);
             var fog_volumes = (from e in volumes where e.profile.HasSettings<ReceiverFog>() select e.profile.GetSetting<ReceiverFog>());
+
+            //the last one is the one that is currently being used by the game
             if (fog_volumes.Count() > 0) receiver_fog = fog_volumes.Last();
 
             if (receiver_fog != null)
@@ -145,8 +147,8 @@ namespace CiarenceUnbelievableModifications
         }
 
         private static void CreateSettingsMenuEntries()
-        {
-            Receiver2ModdingKit.SettingsMenuManager.CreateSettingsMenuOption<bool>("Enable Screen Space Reflections", SettingsManager.configSSREnabled, 14).control.GetComponent(Type.GetType("Receiver2.ToggleComponent, Wolfire.Receiver2, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"));
+		{
+			Receiver2ModdingKit.SettingsMenuManager.CreateSettingsMenuOption<bool>("Enable Screen Space Reflections", SettingsManager.configSSREnabled, 14).control.GetComponent(Type.GetType("Receiver2.ToggleComponent, Wolfire.Receiver2, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"));
             ssrDropDown = Receiver2ModdingKit.SettingsMenuManager.CreateSettingsMenuOption<string>("Screen Space Reflections Quality", SettingsManager.configSSRQuality, 15);
             var ssrDropDownComp = ssrDropDown.control.GetComponent<DropdownComponent>();
             ssrDropDownComp.OnChange.AddListener(value => ChangeSSRQualitySetting(ssrDropDownComp.SelectedIndex)); //I don't understand why this works and it makes me mad
@@ -157,7 +159,7 @@ namespace CiarenceUnbelievableModifications
             if (!GlobalPostProcess.instance.default_standard_profile.HasSettings<ScreenSpaceReflections>()) ssr = GlobalPostProcess.instance.default_standard_profile.AddSettings<ScreenSpaceReflections>();
             ssr.active = SettingsManager.configSSREnabled.Value;
 
-            ssr.distanceFade.value = 1f;
+            ssr.distanceFade.value = 0f;
             ssr.distanceFade.overrideState = true;
 
             ssr.resolution.value = ScreenSpaceReflectionResolution.Supersampled;
@@ -194,6 +196,7 @@ namespace CiarenceUnbelievableModifications
             motionBlur.shutterAngle.value = SettingsManager.configMotionBlurIntensity.Value;
             motionBlur.shutterAngle.overrideState = true;
         }
+
         internal static void ToggleMotionBlur()
         {
             GlobalPostProcess.instance.default_standard_profile.GetSetting<MotionBlur>().active = SettingsManager.configMotionBlurEnabled.Value;

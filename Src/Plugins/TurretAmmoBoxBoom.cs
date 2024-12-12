@@ -3,17 +3,39 @@ using System.Reflection;
 using UnityEngine;
 using HarmonyLib;
 using UnityEngine.Events;
+using Receiver2ModdingKit.Helpers;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System;
+using BepInEx.Configuration;
 
 namespace CiarenceUnbelievableModifications
 {
     public static class TurretAmmoBoxBoom
     {
         public static bool verbose;
+        internal static bool enabled;
 
-        [HarmonyPatch(typeof(TurretScript), nameof(TurretScript.Damage))]
+		/*[HarmonyPatch(typeof(UnityHelpers), nameof(UnityHelpers.ToInt))]
+		[HarmonyTranspiler]
+		private static IEnumerable<CodeInstruction> TranspileToCoolToInt(IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase __originalMethod)
+		{
+			CodeMatcher codeMatcher = new CodeMatcher(instructions, generator);
+
+			codeMatcher.Start();
+
+			Debug.Log(codeMatcher.Remaining);
+
+			codeMatcher
+				.RemoveInstructions(codeMatcher.Remaining)
+				.Insert(new CodeInstruction(OpCodes.Ldarg_0), new CodeInstruction(OpCodes.Ret));
+
+			codeMatcher.Print();
+
+			return codeMatcher.InstructionEnumeration();
+		}*/
+
+		[HarmonyPatch(typeof(TurretScript), nameof(TurretScript.Damage))]
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> TranspileDamageTurretScript(IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase __originalMethod)
         {
@@ -25,6 +47,8 @@ namespace CiarenceUnbelievableModifications
             if (!codeMatcher.ReportFailure(__originalMethod, Debug.LogError))
             {
                 codeMatcher
+                    .InsertAndAdvance(new CodeInstruction(OpCodes.Ldsfld, AccessTools.Field(typeof(TurretAmmoBoxBoom), nameof(TurretAmmoBoxBoom.enabled))))
+                    .InsertBranchAndAdvance(OpCodes.Brfalse_S, codeMatcher.Pos + 1)
                     .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
                     .InsertAndAdvance(new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(UnityEngine.Component), "get_transform")))
                     .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0))
@@ -51,11 +75,13 @@ namespace CiarenceUnbelievableModifications
 
         public static void Enable()
         {
+            enabled = true;
             //ReceiverEvents.StartListening(ReceiverEventTypeGameObject.HitRobot, new UnityAction<ReceiverEventTypeGameObject, GameObject>(OnHitRobot));
         }
 
         public static void Disable()
         {
+            enabled = false;
             //ReceiverEvents.StopListening(ReceiverEventTypeGameObject.HitRobot, OnHitRobot);
         }
 
@@ -100,18 +126,18 @@ namespace CiarenceUnbelievableModifications
         {
             int bullet_count = (turret.bullets_per_belt * turret.ammo_belts); //to me, when a turret reloads, it loads an ammo belt from the ammo box to the place just behind the barrel. So if there's no ammo box left, no more ammo to explode.
             Transform shrapnel_source = turret.transform.Find("point_pivot/gun_pivot/gun_assembly/ammo_destroy");
-            Debug.LogFormat("shrapnel_source is at {0}, transform parent is {1}", shrapnel_source.localPosition, shrapnel_source.parent.name);
+            if (SettingsManager.Verbose) Debug.LogFormat("shrapnel_source is at {0}, transform parent is {1}", shrapnel_source.localPosition, shrapnel_source.parent.name);
             CartridgeSpec cartridge = (CartridgeSpec)typeof(TurretScript).GetField("cartridge_spec", BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic).GetValue(turret);
-            Debug.LogFormat("cartridge is: {0}", cartridge.diameter);
+            if (SettingsManager.Verbose) Debug.LogFormat("cartridge is: {0}", cartridge.diameter);
             //bullet_count += (turret.rifle_cocked) ? turret.bullets - 1 : turret.bullets; //ternary operator because why not, add all bullets currently "loaded" in the turret's magazine. if rifle is cocked subtract 1 round from the total
-            Debug.LogFormat("bullet count is: {0}", bullet_count);
+            if (SettingsManager.Verbose) Debug.LogFormat("bullet count is: {0}", bullet_count);
             for (int i = 0; i < bullet_count; i++)
             {
                 Vector3 vector = LocalAimHandler.player_instance.RandomPointInCollider(1f) - shrapnel_source.transform.position;
                 Vector3 vector2;
-                if (i == 0 && (vector.magnitude < 5f || Probability.Chance(0.05f))) //targets player if magnitude between ammo box and random point in player collider is less than 5, or if unlucky, lol
+                if (i == 0 && ((vector.magnitude < 5f || Probability.Chance(0.05f) || RobotTweaks.campaign_has_override))) //targets player if magnitude between ammo box and random point in player collider is less than 5, or if unlucky, lol
                 {
-                    if (verbose) Debug.Log("Targeting player");
+                    if (SettingsManager.Verbose) Debug.Log("Targeting player");
                     vector2 = vector.normalized;
                 }
                 else
@@ -139,17 +165,17 @@ namespace CiarenceUnbelievableModifications
         {
             if (SettingsManager.configTurretAmmoBoxBoom.Value == false) return;
 
-            Debug.LogFormat("shrapnel_source is at {0}, transform parent is {1}", shrapnel_source.localPosition, shrapnel_source.parent.name);
-            Debug.LogFormat("cartridge is: {0}", cartridge.diameter);
+            if (SettingsManager.Verbose) Debug.LogFormat("shrapnel_source is at {0}, transform parent is {1}", shrapnel_source.localPosition, shrapnel_source.parent.name);
+            if (SettingsManager.Verbose) Debug.LogFormat("cartridge is: {0}", cartridge.diameter);
             //bullet_count += (turret.rifle_cocked) ? turret.bullets - 1 : turret.bullets; //ternary operator because why not, add all bullets currently "loaded" in the turret's magazine. if rifle is cocked subtract 1 round from the total
-            Debug.LogFormat("bullet count is: {0}", bullet_count);
+            if (SettingsManager.Verbose) Debug.LogFormat("bullet count is: {0}", bullet_count);
             for (int i = 0; i < bullet_count; i++)
             {
                 Vector3 vector = LocalAimHandler.player_instance.RandomPointInCollider(1f) - shrapnel_source.transform.position;
                 Vector3 vector2;
-                if (i == 0 && (vector.magnitude < 5f || Probability.Chance(0.05f))) //targets player if magnitude between ammo box and random point in player collider is less than 5, or if unlucky, lol
+                if (i == 0 && ((vector.magnitude < 5f || Probability.Chance(0.05f) || RobotTweaks.campaign_has_override))) //targets player if magnitude between ammo box and random point in player collider is less than 5, or if unlucky, lol
                 {
-                    if (verbose) Debug.Log("Targeting player");
+                    if (SettingsManager.Verbose) Debug.Log("Targeting player");
                     vector2 = vector.normalized;
                 }
                 else

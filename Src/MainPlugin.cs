@@ -6,23 +6,58 @@ using HarmonyLib;
 using BepInEx.Configuration;
 using System;
 using Receiver2ModdingKit;
+using Receiver2ModdingKit.Logging;
+using Extensions = Receiver2ModdingKit.Extensions;
 
 namespace CiarenceUnbelievableModifications
 {
-    [BepInPlugin("Ciarencew.CiarencesUnbelievableModifications", "CiarencesUnbelievableModifications", "1.7.0")]
+	[BepInProcess("Receiver2")]
+	[BepInDependency("pl.szikaka.receiver_2_modding_kit", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInPlugin("Ciarencew.CiarencesUnbelievableModifications", "CiarencesUnbelievableModifications", "1.10.0")]
     public class MainPlugin : BaseUnityPlugin
     {
         //all this kinda sucks, like, I probably should've tried to uniform everything and stuff. But I started doing all that at 3am and can't currently be arsed to make it all better. So oops.
         internal static ConfigFile config;
 
-        internal const string InventoryGlintColourRandomizerHID = "IGCRHID";
+        //standard HID naming: [AcronymOfTweakName]-HID
+        internal const string InventoryGlintColourRandomizerHID = "IGCR-HID";
+        internal const string SpawnCompatibleMagsHID = "SCM-HID";
+
+		internal static new ExtendedManualLogSource Logger
+		{
+			get;
+			private set;
+		}
 
         private void Awake()
         {
-            // Plugin startup logic
-            Logger.LogInfo($"Plugin CiarencesUnbelievableModifications is loaded!");
+			// Plugin startup logic
+			Logger = new ExtendedManualLogSource(this.GetBepInAttribute().Name);
+
+			Receiver2ModdingKit.Extensions.BackgroundColor = ConsoleColor.DarkRed;
+            Logger.LogMessageWithColor($"Plugin CiarencesUnbelievableModifications is loaded!", ConsoleColor.DarkYellow);
+			Receiver2ModdingKit.Extensions.BackgroundColor = ConsoleColor.Black;
+
+			// July 14th https://en.wikipedia.org/wiki/Bastille_Day
+			DateTimeOffset cestTime = new DateTimeOffset(DateTime.UtcNow);
+			cestTime = cestTime.ToOffset(new TimeSpan(2, 0, 0));
+			if (cestTime.Day == 14 && cestTime.Month == 7)
+			{
+				Logger.LogMessageWithColor($"Happy", ConsoleColor.DarkBlue);
+				Logger.LogMessageWithColor($"French", ConsoleColor.White);
+				Logger.LogMessageWithColor($"Day", ConsoleColor.Red);
+			}
 
             config = Config;
+
+			if (Receiver2ModdingKit.Helpers.AssetHelper.FindAssetBundle<Ressources>(out var ressources))
+			{
+				UnityEngine.Object.DontDestroyOnLoad(Instantiate(ressources, this.transform.parent));
+			}
+			else
+			{
+				Logger.LogFatal("Didn't find Ressources thing");
+			}
 
             SettingsManager.InitializeAndBindSettings();
 
@@ -32,7 +67,7 @@ namespace CiarenceUnbelievableModifications
 
             if (SettingsManager.configGunTweaks.Value) Harmony.CreateAndPatchAll(typeof(GunTweaks));
             if (SettingsManager.configRobotTweaks.Value) Harmony.CreateAndPatchAll(typeof(RobotTweaks));
-            if (SettingsManager.configSpawnCompatibleMags.Value) Harmony.CreateAndPatchAll(typeof(rtlgTweaks));
+            if (SettingsManager.configSpawnCompatibleMags.Value) Harmony.CreateAndPatchAll(typeof(rtlgTweaks.SpawnCompatibleMagsTweak), SpawnCompatibleMagsHID);
             Harmony.CreateAndPatchAll(typeof(lahTweaks));
             Harmony.CreateAndPatchAll(typeof(DropGunEverywhere.DropButtonTimeOffsetTranspiler));
             Harmony.CreateAndPatchAll(typeof(RobotTweaks.TurretLightUpdateTranspiler));
@@ -40,23 +75,32 @@ namespace CiarenceUnbelievableModifications
             Harmony.CreateAndPatchAll(typeof(MenuManagerTweaks));
             Harmony.CreateAndPatchAll(typeof(TapeLocatron3000));
             Harmony.CreateAndPatchAll(typeof(TurretAmmoBoxBoom));
+            Harmony.CreateAndPatchAll(typeof(SpecialEventsTweaks.HalloweenTweaks));
+            Harmony.CreateAndPatchAll(typeof(RobotTweaks.BombBotPatch.Transpilers));
+            Harmony.CreateAndPatchAll(typeof(RobotTweaks.BombBotPatch.Patches));
+            Harmony.CreateAndPatchAll(typeof(TapePlayerScriptTweaks.Patches));
+            Harmony.CreateAndPatchAll(typeof(TapePlayerScriptTweaks.Transpilers));
+            Harmony.CreateAndPatchAll(typeof(rtlgTweaks.TapePlayerScriptCompatibilityPatch));
+			Harmony.CreateAndPatchAll(typeof(UnlockManager.Transpilers));
+			if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Direct3D12) Harmony.CreateAndPatchAll(typeof(RessourcesHandler.ComputeShadersHandler));
             if (SettingsManager.configInventoryGlintColourEnabled.Value == true) Harmony.CreateAndPatchAll(typeof(InventoryGlintColourRandomizer), InventoryGlintColourRandomizerHID);
             //Harmony.CreateAndPatchAll(typeof(Leaning));
 
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(OnInitialize));
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(PostProcessTweaks.OnPlayerInitialize));
-            ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(RobotTweaks.OnPlayerInitialize));
+            ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(CustomCampaignChecker.OnPlayerInitialize));
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(rtlgTweaks.OnInitialize));
 
             AddTasksAtCoreStartup(
-                new ModdingKitEvents.StartupAction(RobotTweaks.PatchBombBotPrefab),
+                new ModdingKitEvents.StartupAction(RobotTweaks.BombBotPatch.PatchBombBotPrefab),
                 new ModdingKitEvents.StartupAction(RobotTweaks.PatchPowerLeechPrefab),
                 new ModdingKitEvents.StartupAction(GunTweaks.PatchDeaglesSpring),
                 new ModdingKitEvents.StartupAction(GunTweaks.PatchHiPointCatchMagSlideAmount),
                 new ModdingKitEvents.StartupAction(PostProcessTweaks.AddSettingsToStandardProfile),
                 new ModdingKitEvents.StartupAction(FPSLimiterTweaks.Initialize),
                 new ModdingKitEvents.StartupAction(Leaning.Initialize),
-                new ModdingKitEvents.StartupAction(RobotTweaks.SetUpLightPartFieldReflections)
+                new ModdingKitEvents.StartupAction(RobotTweaks.SetUpLightPartFieldReflections),
+				new ModdingKitEvents.StartupAction(RessourcesHandler.BombBotReplacerHandler.ReplaceBombBotPrefab)
                 );
         }
 
@@ -73,14 +117,6 @@ namespace CiarenceUnbelievableModifications
             if (SettingsManager.configDropGunEverywhere.Value) DropGunEverywhere.Enable();
         }
 
-        public GameObject InstantiateMagazine(Vector3 position, Quaternion rotation, Transform parent, MagazineClass magazine_class)
-        {
-            var RCS = ReceiverCoreScript.Instance();
-            RCS.player.lah.TryGetGun(out GunScript gun);
-            RCS.TryGetMagazinePrefabFromRoot(gun.magazine_root_types[UnityEngine.Random.Range(0, gun.magazine_root_types.Length)], magazine_class, out MagazineScript magazinePrefab);
-            return RuntimeTileLevelGenerator.instance.InstantiateMagazine(position, rotation, parent, magazinePrefab);
-        }
-
         private void OnApplicationFocus(bool focused)
         {
             FPSLimiterTweaks.ToggleFocusLostLimiter(focused);
@@ -88,9 +124,9 @@ namespace CiarenceUnbelievableModifications
 
         private void Update()
         {
-            if (SettingsManager.configDiscoFlashlight.Value) FlashlightTweaks.Discolights();
-            if (SettingsManager.configEnableTurretDiscoLights.Value) RobotTweaks.Discolights();
-            if (SettingsManager.configFlashlightTweaks.Value) FlashlightTweaks.UpdateFlashlight(SettingsManager.configFlashlightToggleKey.Value);
+            if (SettingsManager.configDiscoFlashlight.Value && ReceiverCoreScript.Instance() != null) FlashlightTweaks.Discolights();
+            if (SettingsManager.configEnableTurretDiscoLights.Value && ReceiverCoreScript.Instance() != null) RobotTweaks.Discolights();
+            if (SettingsManager.configFlashlightTweaks.Value && ReceiverCoreScript.Instance() != null) FlashlightTweaks.UpdateFlashlight(SettingsManager.configFlashlightToggleKey.Value);
         }
     }
 }

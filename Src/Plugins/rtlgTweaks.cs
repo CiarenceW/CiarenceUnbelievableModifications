@@ -4,6 +4,11 @@ using UnityEngine;
 using HarmonyLib;
 using System.Security.Cryptography;
 using UnityEngine.UIElements;
+using SimpleJSON;
+using System.Reflection;
+using System.CodeDom;
+using System.Collections.Generic;
+using System;
 
 namespace CiarenceUnbelievableModifications
 {
@@ -12,7 +17,7 @@ namespace CiarenceUnbelievableModifications
         private static bool patched;
         public static bool verbose;
 
-        internal static class VictorianFix
+        internal static class TileFix
         {
             private static TileScript victorian;
 
@@ -35,6 +40,13 @@ namespace CiarenceUnbelievableModifications
                     Debug.LogError("SHIT FUCKING VICTRORIAN IS NULLLLLLLL!!!!!!!!!!!!!!!!!!!!!!!");
                 }
             }
+            private static TileScript twoTowers;
+
+            internal static void ChangeTwoTowersWalkwayLayer() //fixes bullets being able to shoot through the base of the tile
+            {
+                twoTowers = GetTilePrefab(ReceiverTileType.M_10TwoTowers);
+                twoTowers.transform.Find("physical/Base/Architecture/10_tower_walkramp").gameObject.layer = 0; 
+            }
         }
 
         /*internal static class GapAndCatwalkFix
@@ -53,17 +65,6 @@ namespace CiarenceUnbelievableModifications
             }
         }*/
 
-        internal static class TwoTowersFix
-        {
-            private static TileScript twoTowers;
-
-            internal static void ChangeTwoTowersWalkwayLayer() //fixes bullets being able to shoot through the base of the tile
-            {
-                twoTowers = GetTilePrefab(ReceiverTileType.M_10TwoTowers);
-                twoTowers.transform.Find("physical/Base/Architecture/10_tower_walkramp").gameObject.layer = 0; 
-            }
-        }
-
         public static TileScript GetTilePrefab(ReceiverTileType tileType)
         {
             return (from e in RuntimeTileLevelGenerator.instance.tile_prefabs where e.tile_type == tileType select e).FirstOrDefault();
@@ -74,25 +75,135 @@ namespace CiarenceUnbelievableModifications
             if (RuntimeTileLevelGenerator.instance != null && SettingsManager.configVictorianFix.Value)
             {
                 if (patched) return;
-                TwoTowersFix.ChangeTwoTowersWalkwayLayer();
-                VictorianFix.ChangeVictorianTopFloorCollision();
+                TileFix.ChangeTwoTowersWalkwayLayer();
+                TileFix.ChangeVictorianTopFloorCollision();
                 patched = true;
             }
         }
 
-        [HarmonyPatch(typeof(RuntimeTileLevelGenerator),
+        internal static class TapePlayerScriptCompatibilityPatch
+        {
+            internal static Func<TileRoom, Vector3, Quaternion, short, string, JSONObject, ActiveItem> spawnTapeDelegate;
+
+            [HarmonyPatch(typeof(RuntimeTileLevelGenerator), "SpawnTapeGroup")]
+            [HarmonyPrefix]
+            private static bool YeetSpawnTapeGroupIfTapePlayerScript(RuntimeTileLevelGenerator __instance, ref ActiveItem __result, TileRoom tile_room, Vector3 position, Quaternion rotation, short local_ammo_spawn_id, string item_spawn_name, JSONObject persistent_data)
+            {
+                if ((LocalAimHandler.player_instance != null && !LocalAimHandler.player_instance.simplified_tape_player) || (ReceiverCoreScript.Instance().CurrentLoadout != null && !ReceiverCoreScript.Instance().CurrentLoadout.simplified_tape_player))
+                {
+                    Debug.Log("hello");
+                    spawnTapeDelegate = AccessTools.MethodDelegate<Func<TileRoom, Vector3, Quaternion, short, string, JSONObject, ActiveItem>>(AccessTools.Method(typeof(RuntimeTileLevelGenerator), "SpawnTape"));
+                    __result = spawnTapeDelegate(tile_room, position, rotation, local_ammo_spawn_id, item_spawn_name, persistent_data);
+                    Debug.Log(__result);
+                    return false;
+                }
+
+                return true;
+            }
+
+            internal delegate GameObject InstantiateTapeGroupDelegate(Vector3 vector3, Quaternion quaternion, Transform transform);
+
+            internal static InstantiateTapeGroupDelegate instantiateTapeDelegate;
+
+            [HarmonyPatch(typeof(RuntimeTileLevelGenerator), "InstantiateTapeGroup")]
+            [HarmonyPrefix]
+            private static bool YeetInstatiateTapeGroupIfTapePlayerScript(RuntimeTileLevelGenerator __instance, ref GameObject __result, Vector3 position, Quaternion rotation, Transform parent)
+            {
+                if ((LocalAimHandler.player_instance != null && !LocalAimHandler.player_instance.simplified_tape_player) || (ReceiverCoreScript.Instance().CurrentLoadout != null && !ReceiverCoreScript.Instance().CurrentLoadout.simplified_tape_player))
+                {
+                    Debug.Log("hi");
+                    if (instantiateTapeDelegate == null) instantiateTapeDelegate = AccessTools.MethodDelegate<InstantiateTapeGroupDelegate>(AccessTools.Method(typeof(RuntimeTileLevelGenerator), "InstantiateTape"), __instance);   
+                    var tape = instantiateTapeDelegate.Invoke(position, rotation, parent);
+
+                    var tapeScript = tape.GetComponent<TapeScript>();
+
+                    tapeScript.content = ReceiverCoreScript.Instance().tape_loadout_asset.GetTape(tapeScript.tape_id_string);
+
+                    __result = tape;
+                    Debug.Log(__result);
+                    return false;
+                }
+                return true;
+            }
+
+            public static JSONObject TapeGroupDataToNormalTapeData(JSONObject tapeGroupData)
+            {
+                tapeGroupData["tape_id_string"] = new JSONObject();
+
+                var value = tapeGroupData["tape_group_id"].AsInt;
+
+                var rcs = ReceiverCoreScript.Instance();
+
+                var rpgm = ReceiverCoreScript.Instance().game_mode as RankingProgressionGameMode;
+
+                bool flag = rcs.WorldGenerationConfiguration.forced_tape_sequence.Count > rpgm.LevelTapeCollected;
+                string text;
+                if (flag)
+                {
+                    text = rcs.WorldGenerationConfiguration.forced_tape_sequence[rpgm.LevelTapeCollected];
+                }
+                else
+                {
+                    text = rcs.tape_loadout_asset.GetPrioritizedTapeID((TapeGroupID)value, rcs.session_data.picked_up_tapes_string.ToArray<string>());
+                    if (string.IsNullOrEmpty(text))
+                    {
+                        rcs.session_data.picked_up_tapes_string.Clear();
+                        text = rcs.tape_loadout_asset.GetPrioritizedTapeID((TapeGroupID)value, rcs.session_data.picked_up_tapes_string.ToArray<string>());
+                    }
+                }
+                TapeContent tape = rcs.tape_loadout_asset.GetTape(text);/*
+                bool flag2 = tape.tape_group == TapeGroupID.MindControl;
+                bool flag3 = rpgm.CanBeMindcontrolled() || flag;
+                if (flag2 && flag3)
+                {
+                    RankingProgressionGameMode.can_unlock_threat_attack_note = true;
+                    rpgm.progression_data.has_picked_up_mindcontrol_tape = true;
+                }
+                bool flag4 = tape.tape_group == TapeGroupID.SneakBot;
+                bool flag5 = rpgm.CanBeStalked() || flag;
+                if (flag4 && flag5)
+                {
+                    RankingProgressionGameMode.can_unlock_sneak_bot_note = true;
+                    rpgm.progression_data.has_picked_up_sneakbot_tape = true;
+                }
+                if (string.IsNullOrEmpty(text) || (flag2 && !flag3) || (flag4 && !flag5))
+                {
+                    HashSet<TapeGroupID> hashSet = new HashSet<TapeGroupID>(from x in rcs.WorldGenerationConfiguration.tape_groups
+                                                                            select x.tape_group_id into x
+                                                                            where x != TapeGroupID.MindControl && x != TapeGroupID.SneakBot
+                                                                            select x);
+                    text = rcs.tape_loadout_asset.GetPrioritizedTapeID(hashSet, rcs.session_data.picked_up_tapes_string.ToArray<string>());
+                    global::UnityEngine.Debug.LogWarning("Tape group empty, falling back to other tape groups in configuration");
+                    flag2 = false;
+                }
+                if (flag2 && !ConfigFiles.profile.enable_threat_echoes)
+                {
+                    text = rcs.tape_loadout_asset.GetTape(text).unlocks_tape_string;
+                }*/
+                global::UnityEngine.Debug.LogWarning("No more valid tapes can be picked up in play session");
+
+                tapeGroupData["tape_id_string"] = text;
+
+                return null;
+            }
+        }
+
+        internal static class SpawnCompatibleMagsTweak
+        {
+            [HarmonyPatch(typeof(RuntimeTileLevelGenerator),
             nameof(RuntimeTileLevelGenerator.instance.InstantiateMagazine),
             new[] { typeof(Vector3), typeof(Quaternion), typeof(Transform), typeof(MagazineClass) }
             )]
-        [HarmonyPrefix]
-        private static bool InstantiateMagazine(ref GameObject __result, ref Vector3 position, ref Quaternion rotation, ref Transform parent, ref MagazineClass magazine_class)
-        {
-            var RCS = ReceiverCoreScript.Instance();
-            MagazineScript magazinePrefab;
-            var gun = RCS.GetGunPrefab(RCS.CurrentLoadout.gun_internal_name);
-            RCS.TryGetMagazinePrefabFromRoot(gun.magazine_root_types[UnityEngine.Random.Range(0, gun.magazine_root_types.Length)], magazine_class, out magazinePrefab);
-            __result = RuntimeTileLevelGenerator.instance.InstantiateMagazine(position, rotation, parent, magazinePrefab);
-            return false;
+            [HarmonyPrefix]
+            private static bool InstantiateMagazine(ref GameObject __result, ref Vector3 position, ref Quaternion rotation, ref Transform parent, ref MagazineClass magazine_class)
+            {
+                var RCS = ReceiverCoreScript.Instance();
+                MagazineScript magazinePrefab;
+                var gun = RCS.GetGunPrefab(RCS.CurrentLoadout.gun_internal_name);
+                RCS.TryGetMagazinePrefabFromRoot(gun.magazine_root_types[UnityEngine.Random.Range(0, gun.magazine_root_types.Length)], magazine_class, out magazinePrefab);
+                __result = RuntimeTileLevelGenerator.instance.InstantiateMagazine(position, rotation, parent, magazinePrefab);
+                return false;
+            }
         }
     }
 }
