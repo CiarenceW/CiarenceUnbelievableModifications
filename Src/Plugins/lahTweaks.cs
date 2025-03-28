@@ -49,7 +49,6 @@ namespace CiarenceUnbelievableModifications
         [HarmonyPrefix]
         private static void ChangeTapePlayerSlotPosition(LocalAimHandler __instance, LocalAimHandler.WeaponSlot slot, int slot_index)
         {
-            if (slot_index != 6) return;
             var slotCheck = (from e in PlayerGUI.Instance.inventory_slots where e.name == "TapePlayerSlot" select e);
 
             if (__instance.simplified_tape_player)
@@ -57,6 +56,8 @@ namespace CiarenceUnbelievableModifications
                 if (slotCheck.Count() != 0) slotCheck.First().gameObject.SetActive(false);
                 return;
             }
+            if (slot_index != 6) return;
+
             var tapePlayer = __instance.GetItemInInventorySlot(6);
 
             if (slotCheck.Count() == 0)
@@ -75,10 +76,13 @@ namespace CiarenceUnbelievableModifications
                 }
 
                 PlayerGUI.Instance.inventory_slots.Add(tapePlayerSlot);
-            }
+
+				updateWeaponSlotTransformRef.Invoke(__instance, slot, slot_index);
+			}
         }
 
-		private static MethodInfo updateWeaponSlotTransformMethodInfo = AccessTools.Method(typeof(LocalAimHandler), "UpdateWeaponSlotTransform");
+		private static UpdateWeaponSlotTransformDelegate updateWeaponSlotTransformRef = AccessTools.MethodDelegate<UpdateWeaponSlotTransformDelegate>(AccessTools.Method(typeof(LocalAimHandler), "UpdateWeaponSlotTransform"));
+		private delegate void UpdateWeaponSlotTransformDelegate(LocalAimHandler instance, LocalAimHandler.WeaponSlot slot, int slot_index);
 
         [HarmonyPatch(typeof(LocalAimHandler), "InitWeaponSlot")]
         [HarmonyPostfix]
@@ -88,18 +92,10 @@ namespace CiarenceUnbelievableModifications
 			{
 				slot.background.transform.localEulerAngles = new Vector3(23.3928f, 24.0709f, 51.6015f);
 
-				updateWeaponSlotTransformMethodInfo.Invoke(__instance, new object[] { slot, slot_index } );
+				updateWeaponSlotTransformRef.Invoke(__instance, slot, slot_index);
 
-				if (__instance.simplified_tape_player)
-				{
-					PlayerGUI.Instance.inventory_slots[slot_index].gameObject.SetActive(false);
-				}
-				else
-				{
-					PlayerGUI.Instance.inventory_slots[slot_index].gameObject.SetActive(true);
-				}
+				PlayerGUI.Instance.inventory_slots[slot_index].gameObject.SetActive(true);
 			}
-
         }
     }
 }

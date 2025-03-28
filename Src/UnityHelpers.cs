@@ -49,31 +49,5 @@ namespace CiarenceUnbelievableModifications
 		{
 			return boolean ? 1 : 0;
 		}
-
-		public static void WhichOnesFastest()
-		{
-			const int N = 1000000000;
-
-			var coolToIntStopWatch = new Stopwatch();
-
-			coolToIntStopWatch.Start();
-			for (int i = 0; i < N; i++)
-			{
-				(i % 2 == 0).ToInt();
-			}
-			coolToIntStopWatch.Stop();
-
-			var convStopWatch = new Stopwatch();
-
-			convStopWatch.Start();
-			for (int i = 0; i < N; i++)
-			{
-				Convert.ToInt32(i % 2 == 0);
-			}
-			convStopWatch.Stop();
-
-			UnityEngine.Debug.Log("100000 Convert time: " + convStopWatch.ElapsedMilliseconds);
-			UnityEngine.Debug.Log("100000 ToInt time: " +  coolToIntStopWatch.ElapsedMilliseconds);
-		}
     }
 }

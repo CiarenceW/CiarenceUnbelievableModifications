@@ -9,6 +9,9 @@ using System.Reflection;
 using System.CodeDom;
 using System.Collections.Generic;
 using System;
+using System.Reflection.Emit;
+using ImGuiNET;
+using Receiver2ModdingKit.Helpers;
 
 namespace CiarenceUnbelievableModifications
 {
@@ -83,7 +86,9 @@ namespace CiarenceUnbelievableModifications
 
         internal static class TapePlayerScriptCompatibilityPatch
         {
-            internal static Func<TileRoom, Vector3, Quaternion, short, string, JSONObject, ActiveItem> spawnTapeDelegate;
+			internal delegate ActiveItem SpawnTapeDelegate(RuntimeTileLevelGenerator instance, TileRoom tile_room, Vector3 position, Quaternion rotation, short local_ammo_spawn_id, string item_spawn_name, JSONObject persistent_data);
+
+			internal static SpawnTapeDelegate spawnTapeDelegate = AccessTools.MethodDelegate<SpawnTapeDelegate>(AccessTools.Method(typeof(RuntimeTileLevelGenerator), "SpawnTape"));
 
             [HarmonyPatch(typeof(RuntimeTileLevelGenerator), "SpawnTapeGroup")]
             [HarmonyPrefix]
@@ -91,19 +96,16 @@ namespace CiarenceUnbelievableModifications
             {
                 if ((LocalAimHandler.player_instance != null && !LocalAimHandler.player_instance.simplified_tape_player) || (ReceiverCoreScript.Instance().CurrentLoadout != null && !ReceiverCoreScript.Instance().CurrentLoadout.simplified_tape_player))
                 {
-                    Debug.Log("hello");
-                    spawnTapeDelegate = AccessTools.MethodDelegate<Func<TileRoom, Vector3, Quaternion, short, string, JSONObject, ActiveItem>>(AccessTools.Method(typeof(RuntimeTileLevelGenerator), "SpawnTape"));
-                    __result = spawnTapeDelegate(tile_room, position, rotation, local_ammo_spawn_id, item_spawn_name, persistent_data);
-                    Debug.Log(__result);
+                    __result = spawnTapeDelegate(__instance, tile_room, position, rotation, local_ammo_spawn_id, item_spawn_name, persistent_data);
                     return false;
                 }
 
                 return true;
             }
 
-            internal delegate GameObject InstantiateTapeGroupDelegate(Vector3 vector3, Quaternion quaternion, Transform transform);
+            internal delegate GameObject InstantiateTapeGroupDelegate(RuntimeTileLevelGenerator instance, Vector3 vector3, Quaternion quaternion, Transform transform);
 
-            internal static InstantiateTapeGroupDelegate instantiateTapeDelegate;
+            internal static InstantiateTapeGroupDelegate instantiateTapeDelegate = AccessTools.MethodDelegate<InstantiateTapeGroupDelegate>(AccessTools.Method(typeof(RuntimeTileLevelGenerator), "InstantiateTape"));
 
             [HarmonyPatch(typeof(RuntimeTileLevelGenerator), "InstantiateTapeGroup")]
             [HarmonyPrefix]
@@ -111,21 +113,29 @@ namespace CiarenceUnbelievableModifications
             {
                 if ((LocalAimHandler.player_instance != null && !LocalAimHandler.player_instance.simplified_tape_player) || (ReceiverCoreScript.Instance().CurrentLoadout != null && !ReceiverCoreScript.Instance().CurrentLoadout.simplified_tape_player))
                 {
-                    Debug.Log("hi");
-                    if (instantiateTapeDelegate == null) instantiateTapeDelegate = AccessTools.MethodDelegate<InstantiateTapeGroupDelegate>(AccessTools.Method(typeof(RuntimeTileLevelGenerator), "InstantiateTape"), __instance);   
-                    var tape = instantiateTapeDelegate.Invoke(position, rotation, parent);
-
-                    var tapeScript = tape.GetComponent<TapeScript>();
-
-                    tapeScript.content = ReceiverCoreScript.Instance().tape_loadout_asset.GetTape(tapeScript.tape_id_string);
-
-                    __result = tape;
-                    Debug.Log(__result);
+                    __result = instantiateTapeDelegate(__instance, position, rotation, parent);
                     return false;
                 }
+
                 return true;
             }
 
+			[HarmonyPatch(typeof(RuntimeTileLevelGenerator), "GenerateTapeGroupData")]
+			[HarmonyPostfix]
+			private static void GenerateTapeData(RuntimeTileLevelGenerator __instance, ref JSONObject __result)
+			{
+				var rcs = ReceiverCoreScript.Instance();
+				Debug.Log(rcs.CurrentLoadout);
+				if (!rcs.CurrentLoadout.simplified_tape_player)
+				{
+					JSONObject persistentData = new JSONObject();
+					persistentData.Add("tape_id_string", rcs.tape_loadout_asset.GetPrioritizedTapeID((TapeGroupID)__result["tape_group_id"].AsInt, rcs.session_data.picked_up_tapes_string.ToArray<string>()));
+
+					__result = persistentData;
+				}
+			}
+
+			//idk what this is
             public static JSONObject TapeGroupDataToNormalTapeData(JSONObject tapeGroupData)
             {
                 tapeGroupData["tape_id_string"] = new JSONObject();

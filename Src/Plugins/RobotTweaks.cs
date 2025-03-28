@@ -64,24 +64,12 @@ namespace CiarenceUnbelievableModifications
 
         public static bool campaign_has_override;
 
-        private static FieldInfo current_light_mode;
+		private static AccessTools.FieldRef<LightPart, LightPart.LightMode> current_light_modeRef = AccessTools.FieldRefAccess<LightPart, LightPart.LightMode>("current_light_mode");
 
-        private static FieldInfo part;
+		private static AccessTools.FieldRef<LightPart, Color> light_colorRef = AccessTools.FieldRefAccess<LightPart, Color>("light_color");
 
-        private static FieldInfo light_color;
-
-        private static MethodInfo SetLightMode;
-
-        internal static void SetUpLightPartFieldReflections()
-        {
-            current_light_mode = typeof(LightPart).GetField("current_light_mode", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            part = typeof(LightPart).GetField("part", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            light_color = typeof(LightPart).GetField("light_color", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            SetLightMode = typeof(LightPart).GetMethod("SetLightMode", BindingFlags.Instance | BindingFlags.NonPublic);
-        }
+        private static setLightModeDelegate setLightMode = AccessTools.MethodDelegate<setLightModeDelegate>(typeof(LightPart).GetMethod("SetLightMode", BindingFlags.Instance | BindingFlags.NonPublic));
+		private delegate void setLightModeDelegate(LightPart instance, LightPart.LightMode light_mode);
 
         internal class BombBotPatch
         {
@@ -127,33 +115,11 @@ namespace CiarenceUnbelievableModifications
 
             internal class Patches
             {
-                internal static FieldInfo callbackFieldInfo;
+				static System.Type voiceRequestType = typeof(AudioManager).Assembly.GetType("Receiver2.AudioManager+VoiceRequest");
 
-                internal static FieldInfo GetCallbackFieldInfo()
-                {
-                    if (callbackFieldInfo == null)
-                    {
-                        var assembly = typeof(AudioManager).Assembly;
-                        var type = assembly.GetType("Receiver2.AudioManager+VoiceRequest");
-                        callbackFieldInfo = type.GetField("callback", BindingFlags.Public | BindingFlags.Instance);
-                    }
+				internal static AccessTools.FieldRef<object, AudioManager.VoiceRequestDelegate> callbackRef = AccessTools.FieldRefAccess<AudioManager.VoiceRequestDelegate>(voiceRequestType, "callback");
 
-                    return callbackFieldInfo;
-                }
-
-                internal static FieldInfo pathFieldInfo;
-
-                internal static FieldInfo GetPathFieldInfo()
-                {
-                    if (pathFieldInfo == null)
-                    {
-                        var assembly = typeof(AudioManager).Assembly;
-                        var type = assembly.GetType("Receiver2.AudioManager+VoiceRequest");
-                        pathFieldInfo = type.GetField("path", BindingFlags.Public | BindingFlags.Instance);
-                    }
-
-                    return pathFieldInfo;
-                }
+                internal static AccessTools.FieldRef<object, string> pathFieldRef = AccessTools.FieldRefAccess<string>(voiceRequestType, "path");
 
                 internal static string GetCustomClipForPath(string path)
                 {
@@ -187,7 +153,7 @@ namespace CiarenceUnbelievableModifications
                 {
                     if (SettingsManager.configBombBotModelSpeechReplacer.Value)
                     {
-                        GetPathFieldInfo().SetValue(__args[0], GetCustomClipForPath(GetPathFieldInfo().GetValue(__args[0]) as string));
+						pathFieldRef.Invoke(__args[0]) = GetCustomClipForPath(pathFieldRef.Invoke(__args[0]));
                     }
                 }
 
@@ -197,8 +163,7 @@ namespace CiarenceUnbelievableModifications
 				{
                     //this makes the BombBot cut itself off if it's already saying something, I didn't do this for nothing, yay!!! 
                     //also makes the light change intensity based on what the bomb bot is saying
-                    var piss = GetCallbackFieldInfo().GetValue(__args[0]) as AudioManager.VoiceRequestDelegate;
-                    piss.Invoke(__result);
+                    callbackRef.Invoke(__args[0]).Invoke(__result);
                 }
 
                 [HarmonyPatch(typeof(BombBotScript), "SwitchState")]
@@ -465,14 +430,14 @@ namespace CiarenceUnbelievableModifications
         [HarmonyPostfix]
         private static void PatchSecurityCameraStart(ref SecurityCamera __instance)
         {
-            light_color.SetValue(__instance.light_part, (CustomCampaignChecker.ShouldOverrideColour) ? colour_override_idle : colour_idle_camera);
+            light_colorRef.Invoke(__instance.light_part) = (CustomCampaignChecker.ShouldOverrideColour) ? colour_override_idle : colour_idle_camera;
         }
 
         [HarmonyPatch(typeof(ShockDrone), "Start")]
         [HarmonyPostfix]
         private static void PatchShockDroneStart(ref ShockDrone __instance)
         {
-            light_color.SetValue(__instance.light_part, (CustomCampaignChecker.ShouldOverrideColour) ? colour_override_idle : colour_idle_drone);
+            light_colorRef.Invoke(__instance.light_part) = (CustomCampaignChecker.ShouldOverrideColour) ? colour_override_idle : colour_idle_drone;
 
         }
 
@@ -492,14 +457,14 @@ namespace CiarenceUnbelievableModifications
         {
             if (instance != null)
             {
-                SetLightMode.Invoke(instance, new object[] { current_light_mode.GetValue(instance) });
+				setLightMode.Invoke(instance, current_light_modeRef.Invoke(instance));
                 return;
             }
 
             var lightParts = Component.FindObjectsOfType<LightPart>();
             for (int i = 0; i < lightParts.Length; i++)
             {
-                SetLightMode.Invoke(lightParts[i], new object[] { current_light_mode.GetValue(lightParts[i]) });
+                setLightMode.Invoke(lightParts[i], current_light_modeRef.Invoke(lightParts[i]));
             }
         }
 
@@ -516,14 +481,14 @@ namespace CiarenceUnbelievableModifications
             var enemy_prefabs = ReceiverCoreScript.Instance().enemy_prefabs;
             if (entityType == ReceiverEntityType.Unknown)
             {
-                light_color.SetValue(enemy_prefabs.shock_drone.GetComponent<ShockDrone>().light_part, lightColour);
-                light_color.SetValue(enemy_prefabs.security_camera.GetComponent<SecurityCamera>().light_part, lightColour);
+                light_colorRef.Invoke(enemy_prefabs.shock_drone.GetComponent<ShockDrone>().light_part) = lightColour;
+                light_colorRef.Invoke(enemy_prefabs.security_camera.GetComponent<SecurityCamera>().light_part) = lightColour;
                 return;
             }
 
             var prefab = enemy_prefabs.GetPrefab(entityType);
-            if (entityType == ReceiverEntityType.Drone) light_color.SetValue(prefab.GetComponent<ShockDrone>().light_part, lightColour);
-            if (entityType == ReceiverEntityType.SecurityCamera)light_color.SetValue(prefab.GetComponent<SecurityCamera>().light_part, lightColour);
+            if (entityType == ReceiverEntityType.Drone) light_colorRef.Invoke(prefab.GetComponent<ShockDrone>().light_part) = lightColour;
+            if (entityType == ReceiverEntityType.SecurityCamera)light_colorRef.Invoke(prefab.GetComponent<SecurityCamera>().light_part) = lightColour;
         }
 
         public static Color GetPassiveColour(RobotPart part)

@@ -43,6 +43,7 @@ namespace CiarenceUnbelievableModifications
         const string itemGlintColourCatName = "Item Glint Colour";
         const string bombBotTweaksCatName = "Bomb Bot Tweaks";
 		const string hudScalingCatName = "HUD Scaling";
+		const string droneLightDisabler = "Drone Light Disabler";
 
         internal static ConfigEntry<bool> configSSREnabled;
         internal static ConfigEntry<string> configSSRQuality;
@@ -125,6 +126,11 @@ namespace CiarenceUnbelievableModifications
 		internal static ConfigEntry<bool> configEnableHUDScaling;
 		internal static ConfigEntry<UnityEngine.UI.CanvasScaler.ScaleMode> configHUDScaleMode;
 		internal static ConfigEntry<float> configHUDScaleFactor;
+
+		internal static ConfigEntry<bool> configEnableDroneLightDisabler;
+		internal static ConfigEntry<bool> configOnlyDisablePointLights; //point lights are the most expensive
+		internal static ConfigEntry<float> configLightFadeDistance;
+		internal static ConfigEntry<float> configLightCutoffDistance;
 
         internal static void InitializeAndBindSettings()
         {
@@ -251,7 +257,7 @@ namespace CiarenceUnbelievableModifications
             //Explobing burret config
             configTurretAmmoBoxBoom = config.Bind(generalCatName,
                 "TurretAmmoBoxBoom",
-                true,
+                false,
                 "Enable shrapnel when shooting the turret's ammo box (if it still has ammo)");
 
             configTurretAmmoBoxBoom.SettingChanged += (object sender, EventArgs args) =>
@@ -519,6 +525,26 @@ namespace CiarenceUnbelievableModifications
                 }
             };
 			#endregion
+
+			configEnableDroneLightDisabler = config.Bind(droneLightDisabler,
+				"Enable Drone Light Disabler",
+				false,
+				"Disables killdrones' lights when they're too far away, there's barely any visual difference, since they still have their light beams, but you'll notice your fps increase :)");
+
+			configOnlyDisablePointLights = config.Bind(droneLightDisabler,
+				"Only Disable Point Lights",
+				false,
+				"Only disable drone's point lights, point lights are the most expensive type of lights to render");
+
+			configLightFadeDistance = config.Bind(droneLightDisabler,
+				"Light Fade Distance",
+				15f,
+				"The distance at which the lights will begin to fade out");
+
+			configLightCutoffDistance = config.Bind(droneLightDisabler,
+				"Light Cutoff Distance",
+				20f,
+				"The distance at which the lights will be disabled");
 
 			configMotionBlurEnabled.SettingChanged += (object sender, EventArgs args) =>
             {

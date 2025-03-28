@@ -7,7 +7,7 @@ namespace CiarenceUnbelievableModifications
     internal static class FlashlightTweaks
     {
         private static LocalAimHandler lah;
-        private static float drop_button_released_time;
+        private static float drop_button_released_time = float.PositiveInfinity;
         private static float battery_life_remaining = float.MaxValue;
         private static float max_battery_life = 19800f;
         private static VLB.VolumetricLightBeam vlb;
