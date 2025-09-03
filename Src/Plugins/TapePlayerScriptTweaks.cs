@@ -1,15 +1,11 @@
 ﻿using FMOD.Studio;
-using FMODUnity;
 using HarmonyLib;
 using Receiver2;
-using Receiver2ModdingKit.Helpers;
-using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.XR.WSA.Input;
 
 namespace CiarenceUnbelievableModifications
 {

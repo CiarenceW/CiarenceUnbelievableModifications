@@ -83,6 +83,7 @@ namespace CiarenceUnbelievableModifications
             Harmony.CreateAndPatchAll(typeof(rtlgTweaks.TapePlayerScriptCompatibilityPatch));
 			Harmony.CreateAndPatchAll(typeof(UnlockManager.Transpilers));
 			Harmony.CreateAndPatchAll(typeof(DroneLightDisabler));
+			Harmony.CreateAndPatchAll(typeof(SniperBotUnfucker));
 			if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Direct3D12) Harmony.CreateAndPatchAll(typeof(RessourcesHandler.ComputeShadersHandler));
             if (SettingsManager.configInventoryGlintColourEnabled.Value == true) Harmony.CreateAndPatchAll(typeof(InventoryGlintColourRandomizer), InventoryGlintColourRandomizerHID);
             //Harmony.CreateAndPatchAll(typeof(Leaning));
@@ -93,15 +94,16 @@ namespace CiarenceUnbelievableModifications
             ReceiverEvents.StartListening(ReceiverEventTypeVoid.PlayerInitialized, new UnityAction<ReceiverEventTypeVoid>(rtlgTweaks.OnInitialize));
 
 			AddTasksAtCoreStartup(
-				new ModdingKitEvents.StartupAction(RobotTweaks.BombBotPatch.PatchBombBotPrefab),
-				new ModdingKitEvents.StartupAction(RobotTweaks.PatchPowerLeechPrefab),
-				new ModdingKitEvents.StartupAction(GunTweaks.PatchDeaglesSpring),
-				new ModdingKitEvents.StartupAction(GunTweaks.PatchHiPointCatchMagSlideAmount),
-				new ModdingKitEvents.StartupAction(PostProcessTweaks.AddSettingsToStandardProfile),
-				new ModdingKitEvents.StartupAction(FPSLimiterTweaks.Initialize),
-				new ModdingKitEvents.StartupAction(Leaning.Initialize),
-				new ModdingKitEvents.StartupAction(RessourcesHandler.BombBotReplacerHandler.ReplaceBombBotPrefab),
-				new ModdingKitEvents.StartupAction(TapePlayerScriptTweaks.CreateTapePlayerBindingEntries)
+				RobotTweaks.BombBotPatch.PatchBombBotPrefab,
+				RobotTweaks.PatchPowerLeechPrefab,
+				GunTweaks.PatchDeaglesSpring,
+				GunTweaks.PatchHiPointCatchMagSlideAmount,
+				PostProcessTweaks.AddSettingsToStandardProfile,
+				FPSLimiterTweaks.Initialize,
+				Leaning.Initialize,
+				RessourcesHandler.BombBotReplacerHandler.ReplaceBombBotPrefab,
+				TapePlayerScriptTweaks.CreateTapePlayerBindingEntries,
+				SniperBotUnfucker.UnfuckVoiceFilter
 				);
         }
 
